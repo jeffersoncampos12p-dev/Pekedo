@@ -1,12 +1,4 @@
---[[
- ULTIMATE EXPLOIT GUI 2026 | Sistema de comandos integrado
- Digite na barra de busca: "fly on", "speed 50", "god on", etc.
- Mais de 350 funções reais via API Roblox + comandos.
- Requer executor externo para God/ForceField indetectáveis.
- Interface: #151515 #141414 #181818 #222222 #fff | 12px radius
- PARTE 1/4 - Estrutura principal e funções básicas
---]]
-
+--[[ Ultimate Exploit GUI 2026 | +80 funções | Munição Infinita substitui Glide ]]
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -15,11 +7,6 @@ local Workspace = game:GetService("Workspace")
 local VirtualInputManager = game:GetService("VirtualInputManager")
 local TeleportService = game:GetService("TeleportService")
 local Lighting = game:GetService("Lighting")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local HttpService = game:GetService("HttpService")
-local StarterGui = game:GetService("StarterGui")
-local SoundService = game:GetService("SoundService")
-local ContextActionService = game:GetService("ContextActionService")
 local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 local Camera = Workspace.CurrentCamera
@@ -27,14 +14,408 @@ local Camera = Workspace.CurrentCamera
 local TWEEN_INFO = TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 local FAST_TWEEN = TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 
--- Estados globais (muitos serão preenchidos nas próximas partes)
 local States = {
-    -- Movimento
     Fly = false, FlySpeed = 50, Noclip = false, InfJump = false, ClickTP = false,
-    Glide = false, BunnyHop = false, SpinBot = false, Speed = false, WalkSpeed = 32,
+    BunnyHop = false, SpinBot = false, Speed = false, WalkSpeed = 32,
     JumpPowerEnabled = false, JumpPower = 50, HipHeightEnabled = false, HipHeight = 0,
     Fling = false, FlingPower = 100, Invisible = false,
-    -- Jogador
+    GodMode = false, ForceField = false, AutoHeal = false, HealAmount = 50,
+    AntiAFK = false, AutoClick = false, AutoEquip = false,
+    Freecam = false, FOVEnabled = false, FOV = 70, Zoom = false, ZoomAmount = 40,
+    Gravity = 196.2, Time = 14, Fullbright = false,
+    ESP_Players = false, ESP_Items = false, ESP_Mobs = false,
+    ESP_Box = false, ESP_Line = false, RainbowESP = false,
+    Aimbot = false, Spectate = nil,
+    LongJump = false, MoonJump = false, AntiKnockback = false,
+    Headless = false, NoArms = false, NoLegs = false, BigHead = false,
+    RainbowBody = false, Neon = false, Glow = false,
+    FireAura = false, IceAura = false, ElecAura = false,
+    AutoWalk = false, FollowMouse = false, Drone = false, DroneSpeed = 30,
+    AntiFall = false, AutoDodge = false, Parkour = false,
+    InfiniteJump = false, SlowFall = false, NoSlow = false,
+    BodyThrust = false, ThrustPower = 100, AntiGravity = false,
+    Magneto = false, MagnetoForce = 500, Tornado = false,
+    FakeLag = false, LagAmount = 200, TimeBomb = false, BombTime = 0,
+    CamShake = false, LockCam = false, FirstPerson = false,
+    ESP_HealthBar = false, ESP_Names = false, ESP_Distance = false,
+    NoRecoil = false, NoSpread = false, RapidFire = false,
+    AutoFarm = false, AutoQuest = false, AutoCollect = false,
+    Chams = false, Wireframe = false, XRay = false, SilentAim = false,
+    SavedInventory = nil,
+    InfAmmo = false, -- NOVA: Munição Infinita (substitui Glide)
+}
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "ExploitGUI"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 340, 1, 0)
+MainFrame.Position = UDim2.new(0, 0, 0, 0)
+MainFrame.BackgroundColor3 = Color3.fromHex("#151515")
+MainFrame.BorderSizePixel = 0
+MainFrame.ClipsDescendants = true
+MainFrame.Parent = ScreenGui
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
+
+local TitleBar = Instance.new("Frame")
+TitleBar.Size = UDim2.new(1, 0, 0, 36)
+TitleBar.BackgroundColor3 = Color3.fromHex("#141414")
+TitleBar.BorderSizePixel = 0
+TitleBar.Active = true
+TitleBar.Draggable = true
+TitleBar.Parent = MainFrame
+Instance.new("UICorner", TitleBar).CornerRadius = UDim.new(0, 12)
+
+local TitleLabel = Instance.new("TextLabel", TitleBar)
+TitleLabel.Size = UDim2.new(1, -16, 1, 0)
+TitleLabel.Position = UDim2.new(0, 8, 0, 0)
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.Text = "⚡ Exploit Menu"
+TitleLabel.TextColor3 = Color3.fromHex("#ffffff")
+TitleLabel.TextSize = 16
+TitleLabel.Font = Enum.Font.GothamBold
+TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+local ToggleButton = Instance.new("TextButton")
+ToggleButton.Size = UDim2.new(0, 46, 0, 46)
+ToggleButton.Position = UDim2.new(0, 10, 0, 10)
+ToggleButton.BackgroundColor3 = Color3.fromHex("#181818")
+ToggleButton.BorderSizePixel = 0
+ToggleButton.Text = "☰"
+ToggleButton.TextColor3 = Color3.fromHex("#ffffff")
+ToggleButton.TextSize = 24
+ToggleButton.Font = Enum.Font.GothamBold
+ToggleButton.ZIndex = 10
+ToggleButton.AutoButtonColor = false
+ToggleButton.Parent = ScreenGui
+Instance.new("UICorner", ToggleButton).CornerRadius = UDim.new(0, 12)
+
+ToggleButton.MouseEnter:Connect(function()
+    TweenService:Create(ToggleButton, FAST_TWEEN, {BackgroundColor3 = Color3.fromHex("#222222")}):Play()
+end)
+ToggleButton.MouseLeave:Connect(function()
+    TweenService:Create(ToggleButton, FAST_TWEEN, {BackgroundColor3 = Color3.fromHex("#181818")}):Play()
+end)
+
+local menuOpen = true
+ToggleButton.MouseButton1Click:Connect(function()
+    menuOpen = not menuOpen
+    MainFrame.Visible = menuOpen
+    ToggleButton.Text = menuOpen and "✕" or "☰"
+end)
+
+local SearchFrame = Instance.new("Frame")
+SearchFrame.Size = UDim2.new(1, -20, 0, 40)
+SearchFrame.Position = UDim2.new(0, 10, 0, 46)
+SearchFrame.BackgroundColor3 = Color3.fromHex("#181818")
+SearchFrame.BorderSizePixel = 0
+SearchFrame.Parent = MainFrame
+Instance.new("UICorner", SearchFrame).CornerRadius = UDim.new(0, 12)
+
+local SearchBox = Instance.new("TextBox", SearchFrame)
+SearchBox.Size = UDim2.new(1, -16, 1, 0)
+SearchBox.Position = UDim2.new(0, 8, 0, 0)
+SearchBox.BackgroundTransparency = 1
+SearchBox.PlaceholderText = "Comandos: fly on, speed 50..."
+SearchBox.PlaceholderColor3 = Color3.fromHex("#888888")
+SearchBox.TextColor3 = Color3.fromHex("#ffffff")
+SearchBox.TextSize = 14
+SearchBox.Font = Enum.Font.Gotham
+SearchBox.TextXAlignment = Enum.TextXAlignment.Left
+SearchBox.Text = ""
+
+local ScrollFrame = Instance.new("ScrollingFrame")
+ScrollFrame.Size = UDim2.new(1, -20, 1, -96)
+ScrollFrame.Position = UDim2.new(0, 10, 0, 92)
+ScrollFrame.BackgroundTransparency = 1
+ScrollFrame.BorderSizePixel = 0
+ScrollFrame.ScrollBarThickness = 4
+ScrollFrame.ScrollBarImageColor3 = Color3.fromHex("#ffffff")
+ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+ScrollFrame.Parent = MainFrame
+
+local UIList = Instance.new("UIListLayout", ScrollFrame)
+UIList.Padding = UDim.new(0, 8)
+UIList.HorizontalAlignment = Enum.HorizontalAlignment.Center
+UIList.SortOrder = Enum.SortOrder.LayoutOrder
+
+UIList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, UIList.AbsoluteContentSize.Y + 20)
+end)
+
+local function CreateSection(title)
+    local SectionFrame = Instance.new("Frame")
+    SectionFrame.Size = UDim2.new(1, -20, 0, 36)
+    SectionFrame.BackgroundColor3 = Color3.fromHex("#141414")
+    SectionFrame.BorderSizePixel = 0
+    SectionFrame.Parent = ScrollFrame
+    Instance.new("UICorner", SectionFrame).CornerRadius = UDim.new(0, 12)
+    local Label = Instance.new("TextLabel", SectionFrame)
+    Label.Size = UDim2.new(1, -16, 1, 0)
+    Label.Position = UDim2.new(0, 8, 0, 0)
+    Label.BackgroundTransparency = 1
+    Label.Text = title
+    Label.TextColor3 = Color3.fromHex("#ffffff")
+    Label.TextSize = 16
+    Label.Font = Enum.Font.GothamBold
+    Label.TextXAlignment = Enum.TextXAlignment.Left
+    return SectionFrame
+end
+
+local function CreateToggle(name, icon, callback)
+    local ToggleFrame = Instance.new("TextButton")
+    ToggleFrame.Size = UDim2.new(1, -20, 0, 48)
+    ToggleFrame.BackgroundColor3 = Color3.fromHex("#181818")
+    ToggleFrame.BorderSizePixel = 0
+    ToggleFrame.Text = ""
+    ToggleFrame.AutoButtonColor = false
+    ToggleFrame.Parent = ScrollFrame
+    Instance.new("UICorner", ToggleFrame).CornerRadius = UDim.new(0, 12)
+
+    local InfoFrame = Instance.new("Frame", ToggleFrame)
+    InfoFrame.Size = UDim2.new(1, -70, 1, 0)
+    InfoFrame.Position = UDim2.new(0, 12, 0, 0)
+    InfoFrame.BackgroundTransparency = 1
+
+    local IconLabel = Instance.new("TextLabel", InfoFrame)
+    IconLabel.Size = UDim2.new(0, 24, 1, 0)
+    IconLabel.BackgroundTransparency = 1
+    IconLabel.Text = icon
+    IconLabel.TextSize = 18
+    IconLabel.TextColor3 = Color3.fromHex("#ffffff")
+    IconLabel.Font = Enum.Font.Gotham
+
+    local NameLabel = Instance.new("TextLabel", InfoFrame)
+    NameLabel.Size = UDim2.new(1, -30, 1, 0)
+    NameLabel.Position = UDim2.new(0, 30, 0, 0)
+    NameLabel.BackgroundTransparency = 1
+    NameLabel.Text = name
+    NameLabel.TextColor3 = Color3.fromHex("#ffffff")
+    NameLabel.TextSize = 15
+    NameLabel.Font = Enum.Font.Gotham
+    NameLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+    local SwitchFrame = Instance.new("Frame", ToggleFrame)
+    SwitchFrame.Size = UDim2.new(0, 44, 0, 24)
+    SwitchFrame.Position = UDim2.new(1, -56, 0.5, -12)
+    SwitchFrame.BackgroundColor3 = Color3.fromHex("#222222")
+    SwitchFrame.BorderSizePixel = 0
+    Instance.new("UICorner", SwitchFrame).CornerRadius = UDim.new(1, 0)
+
+    local Knob = Instance.new("Frame", SwitchFrame)
+    Knob.Size = UDim2.new(0, 20, 0, 20)
+    Knob.Position = UDim2.new(0, 2, 0.5, -10)
+    Knob.BackgroundColor3 = Color3.fromHex("#ffffff")
+    Knob.BorderSizePixel = 0
+    Instance.new("UICorner", Knob).CornerRadius = UDim.new(1, 0)
+
+    local enabled = false
+    local function updateVisual(state)
+        enabled = state
+        local bgColor = state and Color3.fromHex("#ffffff") or Color3.fromHex("#222222")
+        local knobColor = state and Color3.fromHex("#151515") or Color3.fromHex("#ffffff")
+        local knobPos = state and UDim2.new(1, -22, 0.5, -10) or UDim2.new(0, 2, 0.5, -10)
+        TweenService:Create(SwitchFrame, FAST_TWEEN, {BackgroundColor3 = bgColor}):Play()
+        TweenService:Create(Knob, FAST_TWEEN, {Position = knobPos, BackgroundColor3 = knobColor}):Play()
+    end
+
+    ToggleFrame.MouseButton1Click:Connect(function()
+        enabled = not enabled
+        updateVisual(enabled)
+        callback(enabled)
+    end)
+
+    ToggleFrame.MouseEnter:Connect(function()
+        TweenService:Create(ToggleFrame, FAST_TWEEN, {BackgroundColor3 = Color3.fromHex("#222222")}):Play()
+    end)
+    ToggleFrame.MouseLeave:Connect(function()
+        TweenService:Create(ToggleFrame, FAST_TWEEN, {BackgroundColor3 = Color3.fromHex("#181818")}):Play()
+    end)
+
+    return {SetState = function(state) if state ~= enabled then enabled = state; updateVisual(state); callback(state) end end}
+end
+
+local function CreateSlider(name, icon, min, max, default, callback)
+    local SliderFrame = Instance.new("Frame")
+    SliderFrame.Size = UDim2.new(1, -20, 0, 80)
+    SliderFrame.BackgroundColor3 = Color3.fromHex("#181818")
+    SliderFrame.BorderSizePixel = 0
+    SliderFrame.Parent = ScrollFrame
+    Instance.new("UICorner", SliderFrame).CornerRadius = UDim.new(0, 12)
+
+    local Label = Instance.new("TextLabel", SliderFrame)
+    Label.Size = UDim2.new(1, -24, 0, 24)
+    Label.Position = UDim2.new(0, 12, 0, 6)
+    Label.BackgroundTransparency = 1
+    Label.Text = icon .. "  " .. name
+    Label.TextColor3 = Color3.fromHex("#ffffff")
+    Label.TextSize = 14
+    Label.Font = Enum.Font.Gotham
+    Label.TextXAlignment = Enum.TextXAlignment.Left
+
+    local ValueLabel = Instance.new("TextLabel", SliderFrame)
+    ValueLabel.Size = UDim2.new(0, 50, 0, 24)
+    ValueLabel.Position = UDim2.new(1, -62, 0, 6)
+    ValueLabel.BackgroundTransparency = 1
+    ValueLabel.Text = tostring(default)
+    ValueLabel.TextColor3 = Color3.fromHex("#ffffff")
+    ValueLabel.TextSize = 14
+    ValueLabel.Font = Enum.Font.GothamBold
+    ValueLabel.TextXAlignment = Enum.TextXAlignment.Right
+
+    local SliderBar = Instance.new("TextButton", SliderFrame)
+    SliderBar.Size = UDim2.new(1, -24, 0, 6)
+    SliderBar.Position = UDim2.new(0, 12, 0, 42)
+    SliderBar.BackgroundColor3 = Color3.fromHex("#222222")
+    SliderBar.BorderSizePixel = 0
+    SliderBar.Text = ""
+    SliderBar.AutoButtonColor = false
+    Instance.new("UICorner", SliderBar).CornerRadius = UDim.new(1, 0)
+
+    local Fill = Instance.new("Frame", SliderBar)
+    Fill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
+    Fill.BackgroundColor3 = Color3.fromHex("#ffffff")
+    Fill.BorderSizePixel = 0
+    Instance.new("UICorner", Fill).CornerRadius = UDim.new(1, 0)
+
+    local Knob = Instance.new("TextButton", SliderBar)
+    Knob.Size = UDim2.new(0, 16, 0, 16)
+    Knob.Position = UDim2.new((default - min) / (max - min), -8, 0.5, -8)
+    Knob.BackgroundColor3 = Color3.fromHex("#ffffff")
+    Knob.BorderSizePixel = 0
+    Knob.Text = ""
+    Knob.AutoButtonColor = false
+    Instance.new("UICorner", Knob).CornerRadius = UDim.new(1, 0)
+
+    local dragging = false
+    local function updateValue(input)
+        local relPos = math.clamp((input.Position.X - SliderBar.AbsolutePosition.X) / SliderBar.AbsoluteSize.X, 0, 1)
+        local val = math.floor(min + (max - min) * relPos)
+        ValueLabel.Text = tostring(val)
+        Fill.Size = UDim2.new(relPos, 0, 1, 0)
+        Knob.Position = UDim2.new(relPos, -8, 0.5, -8)
+        callback(val)
+    end
+
+    Knob.MouseButton1Down:Connect(function() dragging = true end)
+    SliderBar.MouseButton1Down:Connect(function()
+        dragging = true
+        updateValue({Position = Vector2.new(UserInputService:GetMouseLocation().X, 0)})
+    end)
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            updateValue({Position = Vector2.new(input.Position.X, 0)})
+        end
+    end)
+end
+
+local function CreateButton(name, icon, callback)
+    local Btn = Instance.new("TextButton")
+    Btn.Size = UDim2.new(1, -20, 0, 40)
+    Btn.BackgroundColor3 = Color3.fromHex("#181818")
+    Btn.BorderSizePixel = 0
+    Btn.Text = icon .. "  " .. name
+    Btn.TextColor3 = Color3.fromHex("#ffffff")
+    Btn.TextSize = 14
+    Btn.Font = Enum.Font.Gotham
+    Btn.AutoButtonColor = false
+    Btn.Parent = ScrollFrame
+    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 12)
+    Btn.MouseEnter:Connect(function() TweenService:Create(Btn, FAST_TWEEN, {BackgroundColor3 = Color3.fromHex("#222222")}):Play() end)
+    Btn.MouseLeave:Connect(function() TweenService:Create(Btn, FAST_TWEEN, {BackgroundColor3 = Color3.fromHex("#181818")}):Play() end)
+    Btn.MouseButton1Click:Connect(callback)
+    return Btn
+end
+
+-- Lista de jogadores
+local PlayersFrame = Instance.new("ScrollingFrame")
+PlayersFrame.Size = UDim2.new(1, -20, 0, 200)
+PlayersFrame.BackgroundColor3 = Color3.fromHex("#141414")
+PlayersFrame.BorderSizePixel = 0
+PlayersFrame.ScrollBarThickness = 4
+PlayersFrame.ScrollBarImageColor3 = Color3.fromHex("#ffffff")
+PlayersFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+PlayersFrame.Parent = ScrollFrame
+Instance.new("UICorner", PlayersFrame).CornerRadius = UDim.new(0, 12)
+
+local PlayersListLayout = Instance.new("UIListLayout", PlayersFrame)
+PlayersListLayout.Padding = UDim.new(0, 4)
+PlayersListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+PlayersListLayout.SortOrder = Enum.SortOrder.Name
+
+PlayersListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    PlayersFrame.CanvasSize = UDim2.new(0, 0, 0, PlayersListLayout.AbsoluteContentSize.Y + 10)
+end)
+
+local function RefreshPlayerList()
+    for _, child in ipairs(PlayersFrame:GetChildren()) do if child:IsA("Frame") then child:Destroy() end end
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            local Entry = Instance.new("Frame")
+            Entry.Size = UDim2.new(1, -10, 0, 36)
+            Entry.BackgroundColor3 = Color3.fromHex("#222222")
+            Entry.BorderSizePixel = 0
+            Entry.Parent = PlayersFrame
+            Instance.new("UICorner", Entry).CornerRadius = UDim.new(0, 8)
+            local NameLabel = Instance.new("TextLabel", Entry)
+            NameLabel.Size = UDim2.new(0.4, -6, 1, 0)
+            NameLabel.Position = UDim2.new(0, 6, 0, 0)
+            NameLabel.BackgroundTransparency = 1
+            NameLabel.Text = player.Name
+            NameLabel.TextColor3 = Color3.fromHex("#ffffff")
+            NameLabel.TextSize = 12
+            NameLabel.Font = Enum.Font.Gotham
+            NameLabel.TextXAlignment = Enum.TextXAlignment.Left
+            NameLabel.TextTruncate = Enum.TextTruncate.AtEnd
+            local function mbtn(x, t, cb)
+                local btn = Instance.new("TextButton", Entry)
+                btn.Size = UDim2.new(0, 36, 1, -6)
+                btn.Position = UDim2.new(1, -x - 36, 0, 3)
+                btn.BackgroundColor3 = Color3.fromHex("#181818")
+                btn.BorderSizePixel = 0
+                btn.Text = t
+                btn.TextSize = 14
+                btn.TextColor3 = Color3.fromHex("#ffffff")
+                btn.AutoButtonColor = false
+                Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+                btn.MouseButton1Click:Connect(cb)
+            end
+            mbtn(0, "👥", function() if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then player.Character.HumanoidRootPart.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame + Vector3.new(0,3,0) end end)
+            mbtn(40, "📍", function() if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then LocalPlayer.Character.HumanoidRootPart.CFrame = player.Character.HumanoidRootPart.CFrame + Vector3.new(0,3,0) end end)
+            mbtn(80, "👁️", function() States.Spectate = player end)
+            mbtn(120, "🌀", function() if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then player.Character.HumanoidRootPart.Velocity = Vector3.new(math.random(-200,200), math.random(50,200), math.random(-200,200)) end end)
+        end
+    end
+end
+Players.PlayerAdded:Connect(RefreshPlayerList)
+Players.PlayerRemoving:Connect(RefreshPlayerList)
+RefreshPlayerList()
+
+-- ====================== SEÇÕES E FUNÇÕES ======================
+CreateSection("⚡ MOVEMENT")
+local ToggleFly = CreateToggle("Fly", "✈️", function(s) States.Fly = s; if s then local c = LocalPlayer.Character; if c and c:FindFirstChild("HumanoidRootPart") then local h = c.HumanoidRootPart; local v = Instance.new("BodyVelocity"); v.Velocity = Vector3.zero; v.MaxForce = Vector3.new(1e5,1e5,1e5); v.P = 3000; v.Name = "FlyV"; v.Parent = h; local g = Instance.new("BodyGyro"); g.MaxTorque = Vector3.new(1e5,1e5,1e5); g.P = 3000; g.CFrame = h.CFrame; g.Name = "FlyG"; g.Parent = h end else local c = LocalPlayer.Character; if c then local h = c:FindFirstChild("HumanoidRootPart"); if h then if h:FindFirstChild("FlyV") then h.FlyV:Destroy() end; if h:FindFirstChild("FlyG") then h.FlyG:Destroy() end end end end end)
+CreateSlider("Fly Speed", "🚀", 20, 200, 50, function(v) States.FlySpeed = v end)
+CreateToggle("Inf Jump", "🦘", function(s) States.InfJump = s end)
+CreateToggle("Noclip", "👻", function(s) States.Noclip = s end)
+CreateToggle("Click TP", "🖱️", function(s) States.ClickTP = s end)
+CreateToggle("Bunny Hop", "🐰", function(s) States.BunnyHop = s end)
+CreateToggle("SpinBot", "🌀", function(s) States.SpinBot = s end)
+CreateToggle("Speed", "🏃", function(s) States.Speed = s; local h = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid"); if h then h.WalkSpeed = s and States.WalkSpeed or 16 end end)
+CreateSlider("Walk Speed", "🏃", 16, 200, 32, function(v) States.WalkSpeed = v; if States.Speed then local h = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid"); if h then h.WalkSpeed = v end end end)
+CreateToggle("Long Jump", "🏃‍♂️", function(s) States.LongJump = s end)
+CreateToggle("Moon Jump", "🌙", function(s) States.MoonJump = s end)
+CreateToggle("Anti Fall", "🪂", function(s) States.AntiFall = s end)
+CreateToggle("Auto Dodge", "🤸", function(s) States.AutoDodge = s end)
+CreateToggle("Parkour", "🧗", function(s) States.Parkour = s end)
+CreateToggle("Infinite Jump", "🔁", function(s) States.InfiniteJump = s end)
+CreateToggle("Slow Fall", "🍃", function(s) States.SlowFall = s end)
+CreateToggle("No Slow", "⏩", functi    -- Jogador
     GodMode = false, ForceField = false, AutoHeal = false, HealAmount = 50,
     NoClip = false, AntiAFK = false, AutoClick = false, AutoEquip = false,
     -- Câmera
