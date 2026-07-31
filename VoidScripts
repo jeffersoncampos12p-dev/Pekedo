@@ -1207,3 +1207,402 @@ RunService.RenderStepped:Connect(function()
 end)
 
 return "Parte 3 carregada. Prossiga para a última parte."
+-- Continuação das seções (adicione após as seções existentes)
+CreateSection("🧬 CARACTERÍSTICAS FÍSICAS")
+CreateToggle("Headless", "🧑‍🦲", function(s) States.Headless = s end)
+CreateToggle("No Arms", "💪❌", function(s) States.NoArms = s end)
+CreateToggle("No Legs", "🦵❌", function(s) States.NoLegs = s end)
+CreateToggle("Big Head", "🤯", function(s) States.BigHead = s end)
+CreateToggle("Big Arms", "💪", function(s) States.BigArms = s end)
+CreateToggle("Small Body", "🔽", function(s) States.SmallBody = s end)
+CreateToggle("Rainbow Body", "🌈", function(s) States.RainbowBody = s end)
+CreateToggle("Neon", "💡", function(s) States.Neon = s end)
+CreateToggle("Glow", "✨", function(s) States.Glow = s end)
+CreateToggle("Fire Aura", "🔥", function(s) States.FireAura = s end)
+CreateToggle("Ice Aura", "❄️", function(s) States.IceAura = s end)
+CreateToggle("Electric Aura", "⚡", function(s) States.ElectricAura = s end)
+CreateButton("Remove Auras", "🧹", function()
+    for _, v in ipairs(LocalPlayer.Character:GetChildren()) do
+        if v:IsA("ParticleEmitter") or v:IsA("Fire") or v:IsA("Sparkles") then v:Destroy() end
+    end
+end)
+
+CreateSection("🎮 CONTROLES")
+CreateToggle("Auto Walk", "🚶", function(s) States.AutoWalk = s end)
+CreateToggle("Auto Run", "🏃", function(s) States.AutoRun = s end)
+CreateToggle("Auto Swim", "🏊", function(s) States.AutoSwim = s end)
+CreateToggle("Follow Mouse", "🖱️", function(s) States.FollowMouse = s end)
+CreateToggle("Drone Mode", "🛸", function(s) States.Drone = s end)
+CreateSlider("Drone Speed", "🚀", 10, 100, 30, function(v) States.DroneSpeed = v end)
+
+CreateSection("📦 INVENTÁRIO")
+CreateButton("Save Inventory", "💾", function()
+    local inv = {}
+    for _, tool in ipairs(LocalPlayer.Backpack:GetChildren()) do
+        if tool:IsA("Tool") then table.insert(inv, tool.Name) end
+    end
+    States.SavedInventory = inv
+end)
+CreateButton("Load Inventory", "📂", function()
+    if not States.SavedInventory then return end
+    -- Tentar pegar ferramentas do chão ou replicar
+    for _, name in ipairs(States.SavedInventory) do
+        for _, obj in ipairs(Workspace:GetDescendants()) do
+            if obj:IsA("Tool") and obj.Name == name then
+                local handle = obj:FindFirstChild("Handle")
+                if handle then handle.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame + Vector3.new(0, 5, 0) end
+            end
+        end
+    end
+end)
+CreateButton("Organize Backpack", "🎒", function()
+    local bp = LocalPlayer.Backpack
+    local tools = {}
+    for _, t in ipairs(bp:GetChildren()) do if t:IsA("Tool") then table.insert(tools, t) end end
+    table.sort(tools, function(a, b) return a.Name < b.Name end)
+    for i, t in ipairs(tools) do t.Parent = bp end
+end)
+CreateButton("Drop All Tools", "🗑️", function()
+    for _, tool in ipairs(LocalPlayer.Backpack:GetChildren()) do
+        if tool:IsA("Tool") then
+            LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):EquipTool(tool)
+            tool.Parent = Workspace
+        end
+    end
+end)
+
+CreateSection("🎨 CORES E ESTILO")
+CreateButton("Rainbow Player", "🌈", function(s) States.RainbowBody = s end)
+CreateButton("Skin Random", "🎲", function()
+    local colors = {Color3.new(1,0,0), Color3.new(0,1,0), Color3.new(0,0,1), Color3.new(1,1,0), Color3.new(1,0,1), Color3.new(0,1,1)}
+    local c = colors[math.random(1, #colors)]
+    for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
+        if part:IsA("BasePart") then part.Color = c end
+    end
+end)
+CreateToggle("Gray Scale", "⬜", function(s)
+    if s then Lighting.ColorCorrectionEffect = Instance.new("ColorCorrectionEffect", Lighting); Lighting.ColorCorrectionEffect.Saturation = -1
+    else if Lighting:FindFirstChild("ColorCorrectionEffect") then Lighting.ColorCorrectionEffect:Destroy() end end
+end)
+CreateToggle("Invert Colors", "🔄", function(s)
+    if s then Lighting.ColorCorrectionEffect = Instance.new("ColorCorrectionEffect", Lighting); Lighting.ColorCorrectionEffect.Contrast = 2
+    else if Lighting:FindFirstChild("ColorCorrectionEffect") then Lighting.ColorCorrectionEffect:Destroy() end end
+end)
+
+CreateSection("🔊 ÁUDIO")
+CreateButton("Mute All", "🔇", function()
+    for _, obj in ipairs(Workspace:GetDescendants()) do
+        if obj:IsA("Sound") then obj.Volume = 0 end
+    end
+end)
+CreateButton("Unmute All", "🔊", function()
+    for _, obj in ipairs(Workspace:GetDescendants()) do
+        if obj:IsA("Sound") then obj.Volume = 1 end
+    end
+end)
+CreateButton("Stop All Sounds", "⏹️", function()
+    for _, obj in ipairs(Workspace:GetDescendants()) do
+        if obj:IsA("Sound") then obj:Stop() end
+    end
+end)
+CreateToggle("Music Player", "🎵", function(s)
+    States.Music = s
+    if s then
+        local sound = Instance.new("Sound", LocalPlayer.PlayerGui)
+        sound.SoundId = "rbxassetid://1842802021" -- ID de música exemplo
+        sound.Looped = true
+        sound:Play()
+        States.MusicSound = sound
+    else
+        if States.MusicSound then States.MusicSound:Destroy() end
+    end
+end)
+
+CreateSection("⚙️ PERFORMANCE")
+CreateButton("High Performance", "⚡", function()
+    settings().Rendering.QualityLevel = 1
+    for _, v in ipairs(Workspace:GetDescendants()) do
+        if v:IsA("BasePart") then v.Material = Enum.Material.SmoothPlastic end
+    end
+end)
+CreateButton("Low Graphics", "📉", function()
+    settings().Rendering.QualityLevel = 10
+    for _, v in ipairs(Workspace:GetDescendants()) do
+        if v:IsA("BasePart") then v.Reflectance = 0; v.Transparency = 0.5 end
+    end
+end)
+CreateButton("Unlock FPS", "🔓", function()
+    settings().Rendering.FrameRateManager = 1000
+end)
+CreateToggle("FPS Boost", "🚀", function(s)
+    if s then
+        settings().Rendering.QualityLevel = 1
+        Lighting.GlobalShadows = false
+        Lighting.FogEnd = 100000
+    else
+        settings().Rendering.QualityLevel = 7
+        Lighting.GlobalShadows = true
+    end
+end)
+
+CreateSection("🧰 FERRAMENTAS")
+CreateButton("Get All Tools", "🧲", function()
+    for _, obj in ipairs(Workspace:GetDescendants()) do
+        if obj:IsA("Tool") then
+            local handle = obj:FindFirstChild("Handle")
+            if handle then handle.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame + Vector3.new(0, 3, 0) end
+        end
+    end
+end)
+CreateButton("Duplicate Held", "📋", function()
+    local tool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool")
+    if tool then
+        local clone = tool:Clone()
+        clone.Parent = LocalPlayer.Backpack
+    end
+end)
+CreateButton("Delete Held", "🗑️", function()
+    local tool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool")
+    if tool then tool:Destroy() end
+end)
+
+CreateSection("👥 SOCIAL")
+CreateButton("Accept All Friends", "🤝", function()
+    -- Essa API é restrita, mas podemos simular cliques
+    -- Requer acesso a scripts do CoreGui, omitido por segurança
+end)
+CreateButton("Unfriend All", "💔", function()
+    -- Similar, restrito
+end)
+CreateToggle("Auto Accept", "✅", function(s) States.AutoAccept = s end)
+CreateToggle("Auto Friend", "👫", function(s) States.AutoFriend = s end)
+
+-- Comandos finais para o parser
+local finalCommands = {
+    ["headless"] = function(v) States.Headless = v == "on" end,
+    ["noarms"] = function(v) States.NoArms = v == "on" end,
+    ["nolegs"] = function(v) States.NoLegs = v == "on" end,
+    ["bighead"] = function(v) States.BigHead = v == "on" end,
+    ["bigarms"] = function(v) States.BigArms = v == "on" end,
+    ["smallbody"] = function(v) States.SmallBody = v == "on" end,
+    ["rainbowbody"] = function(v) States.RainbowBody = v == "on" end,
+    ["neon"] = function(v) States.Neon = v == "on" end,
+    ["glow"] = function(v) States.Glow = v == "on" end,
+    ["fireaura"] = function(v) States.FireAura = v == "on" end,
+    ["iceaura"] = function(v) States.IceAura = v == "on" end,
+    ["electricaura"] = function(v) States.ElectricAura = v == "on" end,
+    ["autowalk"] = function(v) States.AutoWalk = v == "on" end,
+    ["followmouse"] = function(v) States.FollowMouse = v == "on" end,
+    ["drone"] = function(v) States.Drone = v == "on" end,
+    ["saveinv"] = function()
+        local inv = {}
+        for _, tool in ipairs(LocalPlayer.Backpack:GetChildren()) do if tool:IsA("Tool") then table.insert(inv, tool.Name) end end
+        States.SavedInventory = inv
+    end,
+    ["loadinv"] = function()
+        if not States.SavedInventory then return end
+        for _, name in ipairs(States.SavedInventory) do
+            for _, obj in ipairs(Workspace:GetDescendants()) do
+                if obj:IsA("Tool") and obj.Name == name then
+                    local handle = obj:FindFirstChild("Handle")
+                    if handle then handle.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame + Vector3.new(0, 5, 0) end
+                end
+            end
+        end
+    end,
+    ["dropall"] = function()
+        for _, tool in ipairs(LocalPlayer.Backpack:GetChildren()) do
+            if tool:IsA("Tool") then
+                LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):EquipTool(tool)
+                tool.Parent = Workspace
+            end
+        end
+    end,
+    ["muteall"] = function()
+        for _, obj in ipairs(Workspace:GetDescendants()) do if obj:IsA("Sound") then obj.Volume = 0 end end
+    end,
+    ["unmuteall"] = function()
+        for _, obj in ipairs(Workspace:GetDescendants()) do if obj:IsA("Sound") then obj.Volume = 1 end end
+    end,
+    ["stopsounds"] = function()
+        for _, obj in ipairs(Workspace:GetDescendants()) do if obj:IsA("Sound") then obj:Stop() end end
+    end,
+    ["highperf"] = function()
+        settings().Rendering.QualityLevel = 1
+        for _, v in ipairs(Workspace:GetDescendants()) do if v:IsA("BasePart") then v.Material = Enum.Material.SmoothPlastic end end
+    end,
+    ["lowgraphics"] = function()
+        settings().Rendering.QualityLevel = 10
+        for _, v in ipairs(Workspace:GetDescendants()) do if v:IsA("BasePart") then v.Reflectance = 0; v.Transparency = 0.5 end end
+    end,
+    ["unlockfps"] = function() settings().Rendering.FrameRateManager = 1000 end,
+    ["gettools"] = function()
+        for _, obj in ipairs(Workspace:GetDescendants()) do
+            if obj:IsA("Tool") then
+                local handle = obj:FindFirstChild("Handle")
+                if handle then handle.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame + Vector3.new(0, 3, 0) end
+            end
+        end
+    end,
+    ["dup"] = function()
+        local tool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool")
+        if tool then local clone = tool:Clone(); clone.Parent = LocalPlayer.Backpack end
+    end,
+    ["deltool"] = function()
+        local tool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool")
+        if tool then tool:Destroy() end
+    end,
+    ["rejoin"] = function() TeleportService:Teleport(game.PlaceId, LocalPlayer) end,
+    ["serverhop"] = function() TeleportService:TeleportToPlaceInstance(game.PlaceId, TeleportService:GetPlayerPlaceInstanceAsync(game.PlaceId)) end,
+}
+
+local oldParseFinal = ParseCommand
+ParseCommand = function(cmd)
+    cmd = cmd:lower()
+    local args = {}
+    for word in cmd:gmatch("%S+") do table.insert(args, word) end
+    if #args == 0 then return end
+    local command = args[1]
+    local value = tonumber(args[2]) or args[2]
+
+    if finalCommands[command] then
+        finalCommands[command](args[2])
+    end
+    oldParseFinal(cmd)
+end
+
+-- Loops finais (adicionar dentro do RenderStepped principal)
+local finalLoops = function(char, humanoid, hrp)
+    -- Características físicas
+    if States.Headless and char:FindFirstChild("Head") then char.Head.Transparency = 1 end
+    if States.NoArms then
+        for _, limb in ipairs({"Left Arm", "Right Arm"}) do
+            if char:FindFirstChild(limb) then char[limb].Transparency = 1 end
+        end
+    end
+    if States.NoLegs then
+        for _, limb in ipairs({"Left Leg", "Right Leg"}) do
+            if char:FindFirstChild(limb) then char[limb].Transparency = 1 end
+        end
+    end
+    if States.BigHead and char:FindFirstChild("Head") then char.Head.Size = Vector3.new(4,4,4) end
+    if States.BigArms then
+        for _, limb in ipairs({"Left Arm", "Right Arm"}) do
+            if char:FindFirstChild(limb) then char[limb].Size = Vector3.new(4,2,2) end
+        end
+    end
+    if States.SmallBody and char:FindFirstChild("HumanoidRootPart") then
+        for _, part in ipairs(char:GetDescendants()) do
+            if part:IsA("BasePart") and part.Name ~= "Head" then part.Size = part.Size * 0.8 end
+        end
+    end
+    if States.RainbowBody then
+        local hue = tick() % 1
+        local color = Color3.fromHSV(hue, 1, 1)
+        for _, part in ipairs(char:GetDescendants()) do if part:IsA("BasePart") then part.Color = color end end
+    end
+    if States.Neon then
+        for _, part in ipairs(char:GetDescendants()) do if part:IsA("BasePart") then part.Material = Enum.Material.Neon end end
+    end
+    if States.Glow then
+        for _, part in ipairs(char:GetDescendants()) do if part:IsA("BasePart") then part.Material = Enum.Material.Glass; part.Reflectance = 1 end end
+    end
+    if States.FireAura then
+        if not char:FindFirstChild("FireAura") then
+            local fire = Instance.new("Fire", char:FindFirstChild("HumanoidRootPart"))
+            fire.Name = "FireAura"
+            fire.Heat = 25
+            fire.Size = 10
+        end
+    else
+        if char:FindFirstChild("FireAura") then char.FireAura:Destroy() end
+    end
+    if States.IceAura then
+        if not char:FindFirstChild("IceAura") then
+            local ice = Instance.new("ParticleEmitter", char:FindFirstChild("HumanoidRootPart"))
+            ice.Name = "IceAura"
+            ice.Texture = "rbxassetid://243098098"
+            ice.Rate = 50
+            ice.Lifetime = NumberRange.new(1, 2)
+        end
+    else
+        if char:FindFirstChild("IceAura") then char.IceAura:Destroy() end
+    end
+    if States.ElectricAura then
+        if not char:FindFirstChild("ElectricAura") then
+            local spark = Instance.new("Sparkles", char:FindFirstChild("HumanoidRootPart"))
+            spark.Name = "ElectricAura"
+            spark.SparkleColor = Color3.new(1, 1, 0)
+        end
+    else
+        if char:FindFirstChild("ElectricAura") then char.ElectricAura:Destroy() end
+    end
+    -- Auto Walk
+    if States.AutoWalk then
+        local humanoid = char:FindFirstChildOfClass("Humanoid")
+        if humanoid then humanoid:Move(Vector3.new(0, 0, -1), true) end
+    end
+    -- Follow Mouse
+    if States.FollowMouse and hrp then
+        local target = Mouse.Hit.p
+        local dir = (target - hrp.Position).Unit
+        hrp.Velocity = dir * 50
+    end
+    -- Drone
+    if States.Drone and hrp then
+        local height = 20
+        hrp.CFrame = CFrame.new(hrp.Position.X, height, hrp.Position.Z)
+    end
+end
+
+-- Anexar finalLoops ao RenderStepped existente
+local oldRenderSteppedFinal = RunService.RenderStepped
+RunService.RenderStepped:Connect(function()
+    local char = LocalPlayer.Character
+    if char then
+        local humanoid = char:FindFirstChild("Humanoid")
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        finalLoops(char, humanoid, hrp)
+    end
+    oldRenderSteppedFinal()
+end)
+
+-- ESP Final (com HealthBar e Names)
+local oldESPUpdate = UpdateESP
+UpdateESP = function()
+    oldESPUpdate()
+    -- HealthBar ESP
+    if States.ESP_HealthBar then
+        -- Adicionar barra de vida sobre jogadores (simplificado)
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Humanoid") then
+                local humanoid = player.Character.Humanoid
+                local head = player.Character:FindFirstChild("Head")
+                if head then
+                    local bill = Instance.new("BillboardGui")
+                    bill.Size = UDim2.new(0, 50, 0, 10)
+                    bill.StudsOffset = Vector3.new(0, 3, 0)
+                    bill.AlwaysOnTop = true
+                    bill.Adornee = head
+                    bill.Parent = ESPFolder
+                    local bg = Instance.new("Frame", bill)
+                    bg.Size = UDim2.new(1, 0, 1, 0)
+                    bg.BackgroundColor3 = Color3.new(1, 0, 0)
+                    bg.BorderSizePixel = 0
+                    local fill = Instance.new("Frame", bg)
+                    fill.Size = UDim2.new(humanoid.Health / humanoid.MaxHealth, 0, 1, 0)
+                    fill.BackgroundColor3 = Color3.new(0, 1, 0)
+                    fill.BorderSizePixel = 0
+                end
+            end
+        end
+    end
+    if States.ESP_Names then
+        -- Nomes maiores já estão incluídos
+    end
+    if States.ESP_Distance then
+        -- Distância já incluída
+    end
+end
+
+return ScreenGui
