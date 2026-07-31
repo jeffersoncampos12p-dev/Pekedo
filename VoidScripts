@@ -1,0 +1,439 @@
+--[[
+ ULTIMATE EXPLOIT GUI 2026 | Sistema de comandos integrado
+ Digite na barra de busca: "fly on", "speed 50", "god on", etc.
+ Mais de 350 funções reais via API Roblox + comandos.
+ Requer executor externo para God/ForceField indetectáveis.
+ Interface: #151515 #141414 #181818 #222222 #fff | 12px radius
+ PARTE 1/4 - Estrutura principal e funções básicas
+--]]
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local Workspace = game:GetService("Workspace")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local TeleportService = game:GetService("TeleportService")
+local Lighting = game:GetService("Lighting")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local HttpService = game:GetService("HttpService")
+local StarterGui = game:GetService("StarterGui")
+local SoundService = game:GetService("SoundService")
+local ContextActionService = game:GetService("ContextActionService")
+local LocalPlayer = Players.LocalPlayer
+local Mouse = LocalPlayer:GetMouse()
+local Camera = Workspace.CurrentCamera
+
+local TWEEN_INFO = TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+local FAST_TWEEN = TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+
+-- Estados globais (muitos serão preenchidos nas próximas partes)
+local States = {
+    -- Movimento
+    Fly = false, FlySpeed = 50, Noclip = false, InfJump = false, ClickTP = false,
+    Glide = false, BunnyHop = false, SpinBot = false, Speed = false, WalkSpeed = 32,
+    JumpPowerEnabled = false, JumpPower = 50, HipHeightEnabled = false, HipHeight = 0,
+    Fling = false, FlingPower = 100, Invisible = false,
+    -- Jogador
+    GodMode = false, ForceField = false, AutoHeal = false, HealAmount = 50,
+    NoClip = false, AntiAFK = false, AutoClick = false, AutoEquip = false,
+    -- Câmera
+    Freecam = false, FOVEnabled = false, FOV = 70, Zoom = false, ZoomAmount = 40,
+    Spectate = nil,
+    -- Mundo
+    Gravity = 196.2, Time = 14, Fullbright = false, Fog = false, FogEnd = 10000,
+    -- Visual
+    ESP_Players = false, ESP_Items = false, ESP_Mobs = false,
+    ESP_Box = false, ESP_Line = false, RainbowESP = false,
+    Chams = false, Wireframe = false, XRay = false,
+    -- Combate
+    Aimbot = false, Trigger = false, MagicBullet = false, SilentAim = false,
+    -- Outros
+    AutoFarm = false, AutoMine = false, AutoChop = false,
+    ServerHop = false, AutoRejoin = false,
+    -- ... (centenas de outras funções serão adicionadas nas próximas partes)
+}
+
+-- Sistema de comandos
+local function ParseCommand(cmd)
+    cmd = cmd:lower()
+    local args = {}
+    for word in cmd:gmatch("%S+") do table.insert(args, word) end
+    if #args == 0 then return end
+
+    local command = args[1]
+    local value = tonumber(args[2]) or args[2]
+
+    -- Mapeamento de comandos (será expandido nas próximas partes)
+    if command == "fly" then
+        States.Fly = value == "on" or value == true
+    elseif command == "noclip" then
+        States.Noclip = value == "on" or value == true
+    elseif command == "speed" and tonumber(args[2]) then
+        States.WalkSpeed = tonumber(args[2])
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+            LocalPlayer.Character.Humanoid.WalkSpeed = tonumber(args[2])
+        end
+    elseif command == "god" then
+        States.GodMode = value == "on" or value == true
+    elseif command == "forcefield" then
+        States.ForceField = value == "on" or value == true
+    elseif command == "heal" then
+        States.AutoHeal = value == "on" or value == true
+    elseif command == "fov" and tonumber(args[2]) then
+        States.FOV = tonumber(args[2])
+        Camera.FieldOfView = tonumber(args[2])
+    elseif command == "time" and tonumber(args[2]) then
+        States.Time = tonumber(args[2])
+        Lighting:SetMinutesAfterMidnight(tonumber(args[2]) * 60)
+    elseif command == "gravity" and tonumber(args[2]) then
+        States.Gravity = tonumber(args[2])
+        Workspace.Gravity = tonumber(args[2])
+    elseif command == "fullbright" then
+        States.Fullbright = value == "on" or value == true
+    elseif command == "invisible" then
+        States.Invisible = value == "on" or value == true
+    elseif command == "freecam" then
+        States.Freecam = value == "on" or value == true
+    elseif command == "zoom" and tonumber(args[2]) then
+        States.ZoomAmount = tonumber(args[2])
+    elseif command == "esp" then
+        States.ESP_Players = value == "on" or value == true
+    elseif command == "aimbot" then
+        States.Aimbot = value == "on" or value == true
+    elseif command == "rejoin" then
+        TeleportService:Teleport(game.PlaceId, LocalPlayer)
+    elseif command == "serverhop" then
+        TeleportService:TeleportToPlaceInstance(game.PlaceId, TeleportService:GetPlayerPlaceInstanceAsync(game.PlaceId))
+    end
+    -- Muitos outros comandos serão adicionados nas partes 2-4
+end
+
+-- GUI
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "UltimateGUI"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 360, 1, 0)
+MainFrame.Position = UDim2.new(-1, 0, 0, 0)
+MainFrame.BackgroundColor3 = Color3.fromHex("#151515")
+MainFrame.BorderSizePixel = 0
+MainFrame.ClipsDescendants = true
+MainFrame.Parent = ScreenGui
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
+
+local TitleBar = Instance.new("Frame")
+TitleBar.Size = UDim2.new(1, 0, 0, 36)
+TitleBar.BackgroundColor3 = Color3.fromHex("#141414")
+TitleBar.BorderSizePixel = 0
+TitleBar.Active = true
+TitleBar.Draggable = true
+TitleBar.Parent = MainFrame
+Instance.new("UICorner", TitleBar).CornerRadius = UDim.new(0, 12)
+
+local TitleLabel = Instance.new("TextLabel", TitleBar)
+TitleLabel.Size = UDim2.new(1, -16, 1, 0)
+TitleLabel.Position = UDim2.new(0, 8, 0, 0)
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.Text = "⚡ Ultimate Exploit"
+TitleLabel.TextColor3 = Color3.fromHex("#ffffff")
+TitleLabel.TextSize = 16
+TitleLabel.Font = Enum.Font.GothamBold
+TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+local ToggleButton = Instance.new("TextButton")
+ToggleButton.Size = UDim2.new(0, 46, 0, 46)
+ToggleButton.Position = UDim2.new(0, 10, 0, 10)
+ToggleButton.BackgroundColor3 = Color3.fromHex("#181818")
+ToggleButton.BorderSizePixel = 0
+ToggleButton.Text = "☰"
+ToggleButton.TextColor3 = Color3.fromHex("#ffffff")
+ToggleButton.TextSize = 24
+ToggleButton.Font = Enum.Font.GothamBold
+ToggleButton.ZIndex = 10
+ToggleButton.AutoButtonColor = false
+ToggleButton.Parent = ScreenGui
+Instance.new("UICorner", ToggleButton).CornerRadius = UDim.new(0, 12)
+
+ToggleButton.MouseEnter:Connect(function()
+    TweenService:Create(ToggleButton, FAST_TWEEN, {BackgroundColor3 = Color3.fromHex("#222222")}):Play()
+end)
+ToggleButton.MouseLeave:Connect(function()
+    TweenService:Create(ToggleButton, FAST_TWEEN, {BackgroundColor3 = Color3.fromHex("#181818")}):Play()
+end)
+
+local menuOpen = false
+ToggleButton.MouseButton1Click:Connect(function()
+    menuOpen = not menuOpen
+    local targetPos = menuOpen and UDim2.new(0, 0, 0, 0) or UDim2.new(-1, 0, 0, 0)
+    TweenService:Create(MainFrame, TWEEN_INFO, {Position = targetPos}):Play()
+    ToggleButton.Text = menuOpen and "✕" or "☰"
+end)
+
+-- Barra de busca
+local SearchFrame = Instance.new("Frame")
+SearchFrame.Size = UDim2.new(1, -20, 0, 40)
+SearchFrame.Position = UDim2.new(0, 10, 0, 46)
+SearchFrame.BackgroundColor3 = Color3.fromHex("#181818")
+SearchFrame.BorderSizePixel = 0
+SearchFrame.Parent = MainFrame
+Instance.new("UICorner", SearchFrame).CornerRadius = UDim.new(0, 12)
+
+local SearchBox = Instance.new("TextBox", SearchFrame)
+SearchBox.Size = UDim2.new(1, -16, 1, 0)
+SearchBox.Position = UDim2.new(0, 8, 0, 0)
+SearchBox.BackgroundTransparency = 1
+SearchBox.Text = ""
+SearchBox.PlaceholderText = "Digite comandos (ex: fly on, speed 50)..."
+SearchBox.PlaceholderColor3 = Color3.fromHex("#888888")
+SearchBox.TextColor3 = Color3.fromHex("#ffffff")
+SearchBox.TextSize = 14
+SearchBox.Font = Enum.Font.Gotham
+SearchBox.TextXAlignment = Enum.TextXAlignment.Left
+
+SearchBox.FocusLost:Connect(function(enterPressed)
+    if enterPressed and SearchBox.Text ~= "" then
+        ParseCommand(SearchBox.Text)
+        SearchBox.Text = ""
+    end
+end)
+
+local ScrollFrame = Instance.new("ScrollingFrame")
+ScrollFrame.Size = UDim2.new(1, -20, 1, -96)
+ScrollFrame.Position = UDim2.new(0, 10, 0, 92)
+ScrollFrame.BackgroundTransparency = 1
+ScrollFrame.BorderSizePixel = 0
+ScrollFrame.ScrollBarThickness = 4
+ScrollFrame.ScrollBarImageColor3 = Color3.fromHex("#ffffff")
+ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 4000)
+ScrollFrame.Parent = MainFrame
+
+local UIList = Instance.new("UIListLayout", ScrollFrame)
+UIList.Padding = UDim.new(0, 8)
+UIList.HorizontalAlignment = Enum.HorizontalAlignment.Center
+UIList.SortOrder = Enum.SortOrder.LayoutOrder
+
+UIList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, UIList.AbsoluteContentSize.Y + 20)
+end)
+
+-- Funções de criação de elementos (idênticas às anteriores, mas com espaço para novas)
+local function CreateSection(title)
+    local s = Instance.new("Frame")
+    s.Size = UDim2.new(1, -20, 0, 36)
+    s.BackgroundColor3 = Color3.fromHex("#141414")
+    s.BorderSizePixel = 0
+    s.Parent = ScrollFrame
+    Instance.new("UICorner", s).CornerRadius = UDim.new(0, 12)
+    local l = Instance.new("TextLabel", s)
+    l.Size = UDim2.new(1, -16, 1, 0)
+    l.Position = UDim2.new(0, 8, 0, 0)
+    l.BackgroundTransparency = 1
+    l.Text = title
+    l.TextColor3 = Color3.fromHex("#ffffff")
+    l.TextSize = 16
+    l.Font = Enum.Font.GothamBold
+    l.TextXAlignment = Enum.TextXAlignment.Left
+    return s
+end
+
+local function CreateToggle(name, icon, callback)
+    local f = Instance.new("TextButton")
+    f.Size = UDim2.new(1, -20, 0, 48)
+    f.BackgroundColor3 = Color3.fromHex("#181818")
+    f.BorderSizePixel = 0
+    f.Text = ""
+    f.AutoButtonColor = false
+    f.Parent = ScrollFrame
+    Instance.new("UICorner", f).CornerRadius = UDim.new(0, 12)
+    local inf = Instance.new("Frame", f)
+    inf.Size = UDim2.new(1, -70, 1, 0)
+    inf.Position = UDim2.new(0, 12, 0, 0)
+    inf.BackgroundTransparency = 1
+    local il = Instance.new("TextLabel", inf)
+    il.Size = UDim2.new(0, 24, 1, 0)
+    il.BackgroundTransparency = 1
+    il.Text = icon
+    il.TextSize = 18
+    il.TextColor3 = Color3.fromHex("#ffffff")
+    il.Font = Enum.Font.Gotham
+    local nl = Instance.new("TextLabel", inf)
+    nl.Size = UDim2.new(1, -30, 1, 0)
+    nl.Position = UDim2.new(0, 30, 0, 0)
+    nl.BackgroundTransparency = 1
+    nl.Text = name
+    nl.TextColor3 = Color3.fromHex("#ffffff")
+    nl.TextSize = 15
+    nl.Font = Enum.Font.Gotham
+    nl.TextXAlignment = Enum.TextXAlignment.Left
+    local sw = Instance.new("Frame", f)
+    sw.Size = UDim2.new(0, 44, 0, 24)
+    sw.Position = UDim2.new(1, -56, 0.5, -12)
+    sw.BackgroundColor3 = Color3.fromHex("#222222")
+    sw.BorderSizePixel = 0
+    Instance.new("UICorner", sw).CornerRadius = UDim.new(1, 0)
+    local kb = Instance.new("Frame", sw)
+    kb.Size = UDim2.new(0, 20, 0, 20)
+    kb.Position = UDim2.new(0, 2, 0.5, -10)
+    kb.BackgroundColor3 = Color3.fromHex("#ffffff")
+    kb.BorderSizePixel = 0
+    Instance.new("UICorner", kb).CornerRadius = UDim.new(1, 0)
+    local on = false
+    local function upd(st)
+        on = st
+        TweenService:Create(sw, FAST_TWEEN, {BackgroundColor3 = st and Color3.fromHex("#ffffff") or Color3.fromHex("#222222")}):Play()
+        TweenService:Create(kb, FAST_TWEEN, {Position = st and UDim2.new(1, -22, 0.5, -10) or UDim2.new(0, 2, 0.5, -10), BackgroundColor3 = st and Color3.fromHex("#151515") or Color3.fromHex("#ffffff")}):Play()
+    end
+    f.MouseButton1Click:Connect(function() on = not on; upd(on); callback(on) end)
+    f.MouseEnter:Connect(function() TweenService:Create(f, FAST_TWEEN, {BackgroundColor3 = Color3.fromHex("#222222")}):Play() end)
+    f.MouseLeave:Connect(function() TweenService:Create(f, FAST_TWEEN, {BackgroundColor3 = Color3.fromHex("#181818")}):Play() end)
+    return {SetState = function(st) if st ~= on then on = st; upd(st); callback(st) end end}
+end
+
+local function CreateSlider(name, icon, min, max, default, callback)
+    local f = Instance.new("Frame")
+    f.Size = UDim2.new(1, -20, 0, 80)
+    f.BackgroundColor3 = Color3.fromHex("#181818")
+    f.BorderSizePixel = 0
+    f.Parent = ScrollFrame
+    Instance.new("UICorner", f).CornerRadius = UDim.new(0, 12)
+    local lbl = Instance.new("TextLabel", f)
+    lbl.Size = UDim2.new(1, -24, 0, 24)
+    lbl.Position = UDim2.new(0, 12, 0, 6)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = icon .. "  " .. name
+    lbl.TextColor3 = Color3.fromHex("#ffffff")
+    lbl.TextSize = 14
+    lbl.Font = Enum.Font.Gotham
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    local val = Instance.new("TextLabel", f)
+    val.Size = UDim2.new(0, 50, 0, 24)
+    val.Position = UDim2.new(1, -62, 0, 6)
+    val.BackgroundTransparency = 1
+    val.Text = tostring(default)
+    val.TextColor3 = Color3.fromHex("#ffffff")
+    val.TextSize = 14
+    val.Font = Enum.Font.GothamBold
+    val.TextXAlignment = Enum.TextXAlignment.Right
+    local bar = Instance.new("TextButton", f)
+    bar.Size = UDim2.new(1, -24, 0, 6)
+    bar.Position = UDim2.new(0, 12, 0, 42)
+    bar.BackgroundColor3 = Color3.fromHex("#222222")
+    bar.BorderSizePixel = 0
+    bar.Text = ""
+    bar.AutoButtonColor = false
+    Instance.new("UICorner", bar).CornerRadius = UDim.new(1, 0)
+    local fill = Instance.new("Frame", bar)
+    fill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
+    fill.BackgroundColor3 = Color3.fromHex("#ffffff")
+    fill.BorderSizePixel = 0
+    Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
+    local knob = Instance.new("TextButton", bar)
+    knob.Size = UDim2.new(0, 16, 0, 16)
+    knob.Position = UDim2.new((default - min) / (max - min), -8, 0.5, -8)
+    knob.BackgroundColor3 = Color3.fromHex("#ffffff")
+    knob.BorderSizePixel = 0
+    knob.Text = ""
+    knob.AutoButtonColor = false
+    Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
+    local drag = false
+    local function upd(input)
+        local rel = math.clamp((input.Position.X - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
+        local v = math.floor(min + (max - min) * rel)
+        val.Text = tostring(v)
+        fill.Size = UDim2.new(rel, 0, 1, 0)
+        knob.Position = UDim2.new(rel, -8, 0.5, -8)
+        callback(v)
+    end
+    knob.MouseButton1Down:Connect(function() drag = true end)
+    bar.MouseButton1Down:Connect(function() drag = true; upd({Position = Vector2.new(UserInputService:GetMouseLocation().X, 0)}) end)
+    UserInputService.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then drag = false end end)
+    UserInputService.InputChanged:Connect(function(input) if drag and input.UserInputType == Enum.UserInputType.MouseMovement then upd({Position = Vector2.new(input.Position.X, 0)}) end end)
+end
+
+local function CreateButton(name, icon, callback)
+    local b = Instance.new("TextButton")
+    b.Size = UDim2.new(1, -20, 0, 40)
+    b.BackgroundColor3 = Color3.fromHex("#181818")
+    b.BorderSizePixel = 0
+    b.Text = icon .. "  " .. name
+    b.TextColor3 = Color3.fromHex("#ffffff")
+    b.TextSize = 14
+    b.Font = Enum.Font.Gotham
+    b.AutoButtonColor = false
+    b.Parent = ScrollFrame
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 12)
+    b.MouseEnter:Connect(function() TweenService:Create(b, FAST_TWEEN, {BackgroundColor3 = Color3.fromHex("#222222")}):Play() end)
+    b.MouseLeave:Connect(function() TweenService:Create(b, FAST_TWEEN, {BackgroundColor3 = Color3.fromHex("#181818")}):Play() end)
+    b.MouseButton1Click:Connect(callback)
+    return b
+end
+
+-- Lista de jogadores
+local PlayersFrame = Instance.new("ScrollingFrame")
+PlayersFrame.Size = UDim2.new(1, -20, 0, 200)
+PlayersFrame.BackgroundColor3 = Color3.fromHex("#141414")
+PlayersFrame.BorderSizePixel = 0
+PlayersFrame.ScrollBarThickness = 4
+PlayersFrame.ScrollBarImageColor3 = Color3.fromHex("#ffffff")
+PlayersFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+PlayersFrame.Parent = ScrollFrame
+Instance.new("UICorner", PlayersFrame).CornerRadius = UDim.new(0, 12)
+local PlayersListLayout = Instance.new("UIListLayout", PlayersFrame)
+PlayersListLayout.Padding = UDim.new(0, 4)
+PlayersListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+PlayersListLayout.SortOrder = Enum.SortOrder.Name
+PlayersListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    PlayersFrame.CanvasSize = UDim2.new(0, 0, 0, PlayersListLayout.AbsoluteContentSize.Y + 10)
+end)
+
+local function RefreshPlayerList()
+    for _, child in ipairs(PlayersFrame:GetChildren()) do if child:IsA("Frame") then child:Destroy() end end
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            local Entry = Instance.new("Frame")
+            Entry.Size = UDim2.new(1, -10, 0, 36)
+            Entry.BackgroundColor3 = Color3.fromHex("#222222")
+            Entry.BorderSizePixel = 0
+            Entry.Parent = PlayersFrame
+            Instance.new("UICorner", Entry).CornerRadius = UDim.new(0, 8)
+            local NameLabel = Instance.new("TextLabel", Entry)
+            NameLabel.Size = UDim2.new(0.4, -6, 1, 0)
+            NameLabel.Position = UDim2.new(0, 6, 0, 0)
+            NameLabel.BackgroundTransparency = 1
+            NameLabel.Text = player.Name
+            NameLabel.TextColor3 = Color3.fromHex("#ffffff")
+            NameLabel.TextSize = 12
+            NameLabel.Font = Enum.Font.Gotham
+            NameLabel.TextXAlignment = Enum.TextXAlignment.Left
+            NameLabel.TextTruncate = Enum.TextTruncate.AtEnd
+            local function mbtn(x, t, cb)
+                local btn = Instance.new("TextButton", Entry)
+                btn.Size = UDim2.new(0, 36, 1, -6)
+                btn.Position = UDim2.new(1, -x - 36, 0, 3)
+                btn.BackgroundColor3 = Color3.fromHex("#181818")
+                btn.BorderSizePixel = 0
+                btn.Text = t
+                btn.TextSize = 14
+                btn.TextColor3 = Color3.fromHex("#ffffff")
+                btn.AutoButtonColor = false
+                Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+                btn.MouseButton1Click:Connect(cb)
+            end
+            mbtn(0, "👥", function() if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then player.Character.HumanoidRootPart.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame + Vector3.new(0,3,0) end end)
+            mbtn(40, "📍", function() if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then LocalPlayer.Character.HumanoidRootPart.CFrame = player.Character.HumanoidRootPart.CFrame + Vector3.new(0,3,0) end end)
+            mbtn(80, "👁️", function() States.Spectate = player end)
+            mbtn(120, "🌀", function() if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then player.Character.HumanoidRootPart.Velocity = Vector3.new(math.random(-200,200), math.random(50,200), math.random(-200,200)) end end)
+        end
+    end
+end
+Players.PlayerAdded:Connect(RefreshPlayerList)
+Players.PlayerRemoving:Connect(RefreshPlayerList)
+RefreshPlayerList()
+
+-- Construção das seções (Parte 1)
+CreateSection("⚡ MOVEMENT")
+CreateToggle("Fly", "✈️", function(s) States.Fly = s; if s then local c=LocalPlayer.Character; if c and c:FindFirstChild("HumanoidRootPart") then local h=c.HumanoidRootPart; local v=Instance.new("BodyVelocity"); v.Velocity=Vector3.zero; v.MaxForce=Vector3.new(1e5,1e5,1e5); v.P=3000; v.Name="FlyVelocity"; v.Parent=h; local g=Instance.new("BodyGyro"); g.MaxTorque=Vector3.new(1e5,1e5,1e5); g.P=3000; 
