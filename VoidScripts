@@ -1,19 +1,7 @@
---[[ Ultimate Exploit GUI 2026 | Corrigido para loadstring ]]
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
-local Workspace = game:GetService("Workspace")
-local VirtualInputManager = game:GetService("VirtualInputManager")
-local TeleportService = game:GetService("TeleportService")
-local Lighting = game:GetService("Lighting")
-local LocalPlayer = Players.LocalPlayer
-local Mouse = LocalPlayer:GetMouse()
-local Camera = Workspace.CurrentCamera
+-- Carrega a biblioteca Rayfield
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
-local TWEEN_INFO = TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
-local FAST_TWEEN = TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-
+-- Estados das funções (mantidos da versão anterior)
 local States = {
     Fly = false, FlySpeed = 50, Noclip = false, InfJump = false, ClickTP = false,
     BunnyHop = false, SpinBot = false, Speed = false, WalkSpeed = 32,
@@ -26,15 +14,652 @@ local States = {
     ESP_Players = false, ESP_Items = false, ESP_Mobs = false,
     ESP_Box = false, ESP_Line = false, RainbowESP = false,
     Aimbot = false, Spectate = nil,
-    LongJump = false, MoonJump = false, AntiKnockback = false,
-    Headless = false, NoArms = false, NoLegs = false, BigHead = false,
-    RainbowBody = false, Neon = false, Glow = false,
-    FireAura = false, IceAura = false, ElecAura = false,
-    AutoWalk = false, FollowMouse = false, Drone = false, DroneSpeed = 30,
-    AntiFall = false, AutoDodge = false, Parkour = false,
-    InfiniteJump = false, SlowFall = false, NoSlow = false,
-    BodyThrust = false, ThrustPower = 100, AntiGravity = false,
-    Magneto = false, MagnetoForce = 500, Tornado = false,
+    InfAmmo = false,
+}
+
+-- Variáveis de serviço
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local TeleportService = game:GetService("TeleportService")
+local Lighting = game:GetService("Lighting")
+local LocalPlayer = Players.LocalPlayer
+local Mouse = LocalPlayer:GetMouse()
+local Camera = Workspace.CurrentCamera
+
+-- Cria a janela principal do Rayfield
+local Window = Rayfield:CreateWindow({
+    Name = "⚡ Ultimate Exploit",
+    LoadingTitle = "Carregando...",
+    LoadingSubtitle = "Aguarde",
+    ConfigurationSaving = {
+        Enabled = false
+    },
+    Discord = {
+        Enabled = false
+    },
+    KeySystem = false
+})
+
+-- Aba de Movimento
+local MovementTab = Window:CreateTab("🏃 Movimento")
+
+MovementTab:CreateToggle({
+    Name = "Fly",
+    CurrentValue = false,
+    Flag = "Fly",
+    Callback = function(Value)
+        States.Fly = Value
+        if Value then
+            local char = LocalPlayer.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                local hrp = char.HumanoidRootPart
+                local bv = Instance.new("BodyVelocity")
+                bv.Velocity = Vector3.zero
+                bv.MaxForce = Vector3.new(1e5,1e5,1e5)
+                bv.P = 3000
+                bv.Name = "FlyV"
+                bv.Parent = hrp
+                local bg = Instance.new("BodyGyro")
+                bg.MaxTorque = Vector3.new(1e5,1e5,1e5)
+                bg.P = 3000
+                bg.CFrame = hrp.CFrame
+                bg.Name = "FlyG"
+                bg.Parent = hrp
+            end
+        else
+            local char = LocalPlayer.Character
+            if char then
+                local hrp = char:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    if hrp:FindFirstChild("FlyV") then hrp.FlyV:Destroy() end
+                    if hrp:FindFirstChild("FlyG") then hrp.FlyG:Destroy() end
+                end
+            end
+        end
+    end
+})
+
+MovementTab:CreateSlider({
+    Name = "Fly Speed",
+    Range = {20, 200},
+    Increment = 1,
+    CurrentValue = 50,
+    Flag = "FlySpeed",
+    Callback = function(Value)
+        States.FlySpeed = Value
+    end
+})
+
+MovementTab:CreateToggle({
+    Name = "Noclip",
+    CurrentValue = false,
+    Flag = "Noclip",
+    Callback = function(Value)
+        States.Noclip = Value
+    end
+})
+
+MovementTab:CreateToggle({
+    Name = "Infinite Jump",
+    CurrentValue = false,
+    Flag = "InfJump",
+    Callback = function(Value)
+        States.InfJump = Value
+    end
+})
+
+MovementTab:CreateToggle({
+    Name = "Click TP",
+    CurrentValue = false,
+    Flag = "ClickTP",
+    Callback = function(Value)
+        States.ClickTP = Value
+    end
+})
+
+MovementTab:CreateToggle({
+    Name = "Bunny Hop",
+    CurrentValue = false,
+    Flag = "BunnyHop",
+    Callback = function(Value)
+        States.BunnyHop = Value
+    end
+})
+
+MovementTab:CreateToggle({
+    Name = "SpinBot",
+    CurrentValue = false,
+    Flag = "SpinBot",
+    Callback = function(Value)
+        States.SpinBot = Value
+    end
+})
+
+MovementTab:CreateToggle({
+    Name = "Speed",
+    CurrentValue = false,
+    Flag = "SpeedToggle",
+    Callback = function(Value)
+        States.Speed = Value
+        local humanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+        if humanoid then humanoid.WalkSpeed = Value and States.WalkSpeed or 16 end
+    end
+})
+
+MovementTab:CreateSlider({
+    Name = "Walk Speed",
+    Range = {16, 200},
+    Increment = 1,
+    CurrentValue = 32,
+    Flag = "WalkSpeed",
+    Callback = function(Value)
+        States.WalkSpeed = Value
+        if States.Speed then
+            local humanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+            if humanoid then humanoid.WalkSpeed = Value end
+        end
+    end
+})
+
+MovementTab:CreateToggle({
+    Name = "Fling",
+    CurrentValue = false,
+    Flag = "Fling",
+    Callback = function(Value)
+        States.Fling = Value
+    end
+})
+
+MovementTab:CreateSlider({
+    Name = "Fling Power",
+    Range = {50, 1000},
+    Increment = 1,
+    CurrentValue = 100,
+    Flag = "FlingPower",
+    Callback = function(Value)
+        States.FlingPower = Value
+    end
+})
+
+-- Aba de Jogador
+local PlayerTab = Window:CreateTab("🛡️ Jogador")
+
+PlayerTab:CreateToggle({
+    Name = "God Mode",
+    CurrentValue = false,
+    Flag = "GodMode",
+    Callback = function(Value)
+        States.GodMode = Value
+    end
+})
+
+PlayerTab:CreateToggle({
+    Name = "ForceField",
+    CurrentValue = false,
+    Flag = "ForceField",
+    Callback = function(Value)
+        States.ForceField = Value
+    end
+})
+
+PlayerTab:CreateToggle({
+    Name = "Auto Heal",
+    CurrentValue = false,
+    Flag = "AutoHeal",
+    Callback = function(Value)
+        States.AutoHeal = Value
+    end
+})
+
+PlayerTab:CreateSlider({
+    Name = "Heal Amount",
+    Range = {10, 100},
+    Increment = 1,
+    CurrentValue = 50,
+    Flag = "HealAmount",
+    Callback = function(Value)
+        States.HealAmount = Value
+    end
+})
+
+PlayerTab:CreateToggle({
+    Name = "Invisible",
+    CurrentValue = false,
+    Flag = "Invisible",
+    Callback = function(Value)
+        States.Invisible = Value
+    end
+})
+
+PlayerTab:CreateToggle({
+    Name = "Anti AFK",
+    CurrentValue = false,
+    Flag = "AntiAFK",
+    Callback = function(Value)
+        States.AntiAFK = Value
+    end
+})
+
+PlayerTab:CreateToggle({
+    Name = "Auto Click",
+    CurrentValue = false,
+    Flag = "AutoClick",
+    Callback = function(Value)
+        States.AutoClick = Value
+    end
+})
+
+PlayerTab:CreateToggle({
+    Name = "Auto Equip",
+    CurrentValue = false,
+    Flag = "AutoEquip",
+    Callback = function(Value)
+        States.AutoEquip = Value
+    end
+})
+
+PlayerTab:CreateToggle({
+    Name = "Custom Jump",
+    CurrentValue = false,
+    Flag = "CustomJump",
+    Callback = function(Value)
+        States.JumpPowerEnabled = Value
+        local humanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+        if humanoid then humanoid.JumpPower = Value and States.JumpPower or 50 end
+    end
+})
+
+PlayerTab:CreateSlider({
+    Name = "Jump Power",
+    Range = {50, 500},
+    Increment = 1,
+    CurrentValue = 50,
+    Flag = "JumpPower",
+    Callback = function(Value)
+        States.JumpPower = Value
+        if States.JumpPowerEnabled then
+            local humanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+            if humanoid then humanoid.JumpPower = Value end
+        end
+    end
+})
+
+PlayerTab:CreateToggle({
+    Name = "Custom Hip",
+    CurrentValue = false,
+    Flag = "CustomHip",
+    Callback = function(Value)
+        States.HipHeightEnabled = Value
+        local humanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+        if humanoid then humanoid.HipHeight = Value and States.HipHeight or 0 end
+    end
+})
+
+PlayerTab:CreateSlider({
+    Name = "Hip Height",
+    Range = {0, 20},
+    Increment = 1,
+    CurrentValue = 0,
+    Flag = "HipHeight",
+    Callback = function(Value)
+        States.HipHeight = Value
+        if States.HipHeightEnabled then
+            local humanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+            if humanoid then humanoid.HipHeight = Value end
+        end
+    end
+})
+
+-- Aba de Combate
+local CombatTab = Window:CreateTab("🔫 Combate")
+
+CombatTab:CreateToggle({
+    Name = "Infinite Ammo",
+    CurrentValue = false,
+    Flag = "InfAmmo",
+    Callback = function(Value)
+        States.InfAmmo = Value
+    end
+})
+
+CombatTab:CreateToggle({
+    Name = "Aimbot",
+    CurrentValue = false,
+    Flag = "Aimbot",
+    Callback = function(Value)
+        States.Aimbot = Value
+    end
+})
+
+CombatTab:CreateToggle({
+    Name = "No Recoil",
+    CurrentValue = false,
+    Flag = "NoRecoil",
+    Callback = function(Value)
+        States.NoRecoil = Value
+    end
+})
+
+CombatTab:CreateToggle({
+    Name = "No Spread",
+    CurrentValue = false,
+    Flag = "NoSpread",
+    Callback = function(Value)
+        States.NoSpread = Value
+    end
+})
+
+CombatTab:CreateToggle({
+    Name = "Rapid Fire",
+    CurrentValue = false,
+    Flag = "RapidFire",
+    Callback = function(Value)
+        States.RapidFire = Value
+    end
+})
+
+-- Aba de Câmera
+local CameraTab = Window:CreateTab("🎥 Câmera")
+
+CameraTab:CreateToggle({
+    Name = "Freecam",
+    CurrentValue = false,
+    Flag = "Freecam",
+    Callback = function(Value)
+        States.Freecam = Value
+    end
+})
+
+CameraTab:CreateToggle({
+    Name = "Custom FOV",
+    CurrentValue = false,
+    Flag = "CustomFOV",
+    Callback = function(Value)
+        States.FOVEnabled = Value
+        Camera.FieldOfView = Value and States.FOV or 70
+    end
+})
+
+CameraTab:CreateSlider({
+    Name = "FOV",
+    Range = {30, 120},
+    Increment = 1,
+    CurrentValue = 70,
+    Flag = "FOV",
+    Callback = function(Value)
+        States.FOV = Value
+        if States.FOVEnabled then Camera.FieldOfView = Value end
+    end
+})
+
+CameraTab:CreateToggle({
+    Name = "Zoom",
+    CurrentValue = false,
+    Flag = "Zoom",
+    Callback = function(Value)
+        States.Zoom = Value
+    end
+})
+
+CameraTab:CreateSlider({
+    Name = "Zoom Amount",
+    Range = {20, 100},
+    Increment = 1,
+    CurrentValue = 40,
+    Flag = "ZoomAmount",
+    Callback = function(Value)
+        States.ZoomAmount = Value
+    end
+})
+
+-- Aba de Mundo
+local WorldTab = Window:CreateTab("🌍 Mundo")
+
+WorldTab:CreateSlider({
+    Name = "Gravity",
+    Range = {0, 500},
+    Increment = 1,
+    CurrentValue = 196.2,
+    Flag = "Gravity",
+    Callback = function(Value)
+        States.Gravity = Value
+        Workspace.Gravity = Value
+    end
+})
+
+WorldTab:CreateSlider({
+    Name = "Time",
+    Range = {0, 24},
+    Increment = 1,
+    CurrentValue = 14,
+    Flag = "Time",
+    Callback = function(Value)
+        States.Time = Value
+        Lighting:SetMinutesAfterMidnight(Value * 60)
+    end
+})
+
+WorldTab:CreateToggle({
+    Name = "Fullbright",
+    CurrentValue = false,
+    Flag = "Fullbright",
+    Callback = function(Value)
+        States.Fullbright = Value
+    end
+})
+
+-- Aba de Visuals
+local VisualsTab = Window:CreateTab("👁️ Visuals")
+
+VisualsTab:CreateToggle({
+    Name = "ESP Players",
+    CurrentValue = false,
+    Flag = "ESP_Players",
+    Callback = function(Value)
+        States.ESP_Players = Value
+    end
+})
+
+VisualsTab:CreateToggle({
+    Name = "ESP Items",
+    CurrentValue = false,
+    Flag = "ESP_Items",
+    Callback = function(Value)
+        States.ESP_Items = Value
+    end
+})
+
+VisualsTab:CreateToggle({
+    Name = "ESP Mobs",
+    CurrentValue = false,
+    Flag = "ESP_Mobs",
+    Callback = function(Value)
+        States.ESP_Mobs = Value
+    end
+})
+
+VisualsTab:CreateToggle({
+    Name = "Rainbow ESP",
+    CurrentValue = false,
+    Flag = "RainbowESP",
+    Callback = function(Value)
+        States.RainbowESP = Value
+    end
+})
+
+-- Aba de Utilidades
+local UtilTab = Window:CreateTab("🔧 Utilidades")
+
+UtilTab:CreateButton({
+    Name = "Rejoin",
+    Callback = function()
+        TeleportService:Teleport(game.PlaceId, LocalPlayer)
+    end
+})
+
+UtilTab:CreateButton({
+    Name = "Server Hop",
+    Callback = function()
+        TeleportService:TeleportToPlaceInstance(game.PlaceId, TeleportService:GetPlayerPlaceInstanceAsync(game.PlaceId))
+    end
+})
+
+UtilTab:CreateButton({
+    Name = "Bring All Players",
+    Callback = function()
+        if not LocalPlayer.Character then return end
+        local pos = LocalPlayer.Character.HumanoidRootPart.Position
+        for _, plr in ipairs(Players:GetPlayers()) do
+            if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                plr.Character.HumanoidRootPart.CFrame = CFrame.new(pos + Vector3.new(0, 3, 0))
+            end
+        end
+    end
+})
+
+UtilTab:CreateButton({
+    Name = "Delete Tools",
+    Callback = function()
+        for _, t in ipairs(LocalPlayer.Backpack:GetChildren()) do if t:IsA("Tool") then t:Destroy() end end
+        if LocalPlayer.Character then for _, t in ipairs(LocalPlayer.Character:GetChildren()) do if t:IsA("Tool") then t:Destroy() end end end
+    end
+})
+
+-- Conexões de eventos
+UserInputService.JumpRequest:Connect(function()
+    if States.InfJump and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid.Jump = true
+    end
+end)
+
+Mouse.Button1Down:Connect(function()
+    if States.ClickTP and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(Mouse.Hit.p)
+    end
+end)
+
+LocalPlayer.CharacterAdded:Connect(function(c)
+    local h = c:WaitForChild("Humanoid")
+    h.HealthChanged:Connect(function()
+        if States.GodMode or States.ForceField then h.Health = h.MaxHealth end
+    end)
+    if States.Fly then
+        local hrp = c:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            local bv = Instance.new("BodyVelocity")
+            bv.Velocity = Vector3.zero
+            bv.MaxForce = Vector3.new(1e5,1e5,1e5)
+            bv.P = 3000
+            bv.Name = "FlyV"
+            bv.Parent = hrp
+            local bg = Instance.new("BodyGyro")
+            bg.MaxTorque = Vector3.new(1e5,1e5,1e5)
+            bg.P = 3000
+            bg.CFrame = hrp.CFrame
+            bg.Name = "FlyG"
+            bg.Parent = hrp
+        end
+    end
+    if States.Speed then h.WalkSpeed = States.WalkSpeed end
+    if States.JumpPowerEnabled then h.JumpPower = States.JumpPower end
+    if States.HipHeightEnabled then h.HipHeight = States.HipHeight end
+    if States.Invisible then for _, p in ipairs(c:GetDescendants()) do if p:IsA("BasePart") then p.Transparency = 0.7 end end end
+end)
+
+-- Loop principal
+RunService.RenderStepped:Connect(function()
+    local c = LocalPlayer.Character
+    if not c then return end
+    local h = c:FindFirstChild("Humanoid")
+    local hr = c:FindFirstChild("HumanoidRootPart")
+
+    if States.Noclip then for _, p in ipairs(c:GetDescendants()) do if p:IsA("BasePart") then p.CanCollide = false end end end
+    if States.Fly and hr then
+        local bv = hr:FindFirstChild("FlyV")
+        local bg = hr:FindFirstChild("FlyG")
+        if bv and bg then
+            local d = Vector3.zero
+            if UserInputService:IsKeyDown(Enum.KeyCode.W) then d += Camera.CFrame.LookVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.S) then d -= Camera.CFrame.LookVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.A) then d -= Camera.CFrame.RightVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.D) then d += Camera.CFrame.RightVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then d += Vector3.new(0, 1, 0) end
+            if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then d -= Vector3.new(0, 1, 0) end
+            bv.Velocity = (d.Magnitude > 0 and d.Unit or Vector3.zero) * States.FlySpeed
+            bg.CFrame = CFrame.new(Vector3.zero, Camera.CFrame.LookVector)
+        end
+    end
+    if States.BunnyHop and h and h.MoveDirection.Magnitude > 0 then h.Jump = true end
+    if States.SpinBot and hr then hr.CFrame = hr.CFrame * CFrame.Angles(0, math.rad(10), 0) end
+    if States.Fling and hr then hr.Velocity = hr.CFrame.LookVector * States.FlingPower; hr.RotVelocity = Vector3.new(math.random(-20,20), math.random(-20,20), math.random(-20,20)) end
+    if States.Invisible then for _, p in ipairs(c:GetDescendants()) do if p:IsA("BasePart") then p.Transparency = 0.7 end end end
+    if States.GodMode or States.ForceField then
+        if h and h.Health < h.MaxHealth then h.Health = h.MaxHealth end
+    elseif States.AutoHeal and h and h.Health < h.MaxHealth then
+        h.Health = math.min(h.Health + States.HealAmount * 0.02, h.MaxHealth)
+    end
+    if States.ForceField then
+        if not c:FindFirstChildOfClass("ForceField") then Instance.new("ForceField", c) end
+    else
+        local ff = c:FindFirstChildOfClass("ForceField")
+        if ff then ff:Destroy() end
+    end
+    if States.Freecam then
+        if h then h.AutoRotate = false end
+        Camera.CameraSubject = nil
+    else
+        if h then h.AutoRotate = true end
+        if not States.Spectate then Camera.CameraSubject = h end
+    end
+    if States.Spectate and States.Spectate.Character then
+        local t = States.Spectate.Character:FindFirstChild("Head")
+        if t then Camera.CameraSubject = t end
+    end
+    if States.Fullbright then
+        Lighting.Ambient = Color3.new(1,1,1); Lighting.OutdoorAmbient = Color3.new(1,1,1)
+    else
+        Lighting.Ambient = Color3.new(0,0,0); Lighting.OutdoorAmbient = Color3.new(0.5,0.5,0.5)
+    end
+    if States.Zoom then Camera.FieldOfView = States.ZoomAmount end
+    if States.Aimbot and c then
+        local n = nil; local md = 200
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") then
+                local d = (Camera.CFrame.Position - p.Character.Head.Position).Magnitude
+                if d < md then md = d; n = p.Character.Head end
+            end
+        end
+        if n then Camera.CFrame = CFrame.new(Camera.CFrame.Position, n.Position) end
+    end
+    -- Munição infinita
+    if States.InfAmmo then
+        local tools = {}
+        if LocalPlayer.Backpack then for _, t in ipairs(LocalPlayer.Backpack:GetChildren()) do if t:IsA("Tool") then table.insert(tools, t) end end end
+        if c then for _, t in ipairs(c:GetChildren()) do if t:IsA("Tool") then table.insert(tools, t) end end end
+        for _, tool in ipairs(tools) do
+            for _, attr in ipairs({"Ammo", "CurrentAmmo", "Magazine", "Clip", "Bullets"}) do
+                local obj = tool:FindFirstChild(attr)
+                if obj and obj:IsA("IntValue") then obj.Value = 999999999 end
+                if obj and obj:IsA("NumberValue") then obj.Value = 999999999 end
+            end
+        end
+    end
+end)
+
+-- Loops auxiliares
+spawn(function() while true do if States.AutoClick then VirtualInputManager:SendMouseButtonEvent(0,0,1,false,game,0) task.wait(0.05) VirtualInputManager:SendMouseButtonEvent(0,0,0,false,game,0) task.wait(0.05) else task.wait(0.5) end end end)
+spawn(function() while true do if States.AntiAFK then VirtualInputManager:SendMouseButtonEvent(0,0,1,false,game,0) task.wait(1) VirtualInputManager:SendMouseButtonEvent(0,0,0,false,game,0) task.wait(5) else task.wait(1) end end end)
+spawn(function() while true do if States.AutoEquip and LocalPlayer.Character then local t = LocalPlayer.Backpack:GetChildren(); if #t > 0 then local h = LocalPlayer.Character:FindFirstChildOfClass("Humanoid"); if h then h:EquipTool(t[1]) end end end task.wait(3) end end)
+
+-- ESP
+local ESPFolder = Instance.new("Folder", Workspace)
+ESPFolder.Name = "ESP_Container"
+spawn(function()
+    while true do
+        for _, o in ipairs(ESPFolder:GetChildren()) do o:Destroy() en    Magneto = false, MagnetoForce = 500, Tornado = false,
     FakeLag = false, LagAmount = 200, TimeBomb = false, BombTime = 0,
     CamShake = false, LockCam = false, FirstPerson = false,
     ESP_HealthBar = false, ESP_Names = false, ESP_Distance = false,
