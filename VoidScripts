@@ -913,3 +913,297 @@ end)
         for i = 1, 5 do
             local e = Instance.new("Explosion")
             e.Position = hrp.Position + Vector3.new(math.random(-20,20), 0, math.random(-20
+-- Movimento extra
+CreateSection("🏃 MOVEMENT EXTRA")
+CreateToggle("Long Jump", "🏃‍♂️", function(s) States.LongJump = s end)
+CreateToggle("Moon Jump", "🌙", function(s) States.MoonJump = s end)
+CreateToggle("Auto Swim", "🏊", function(s) States.AutoSwim = s end)
+CreateToggle("Auto Run", "🏃‍♂️💨", function(s) States.AutoRun = s end)
+CreateToggle("Anti Fall", "🪂", function(s) States.AntiFall = s end)
+CreateToggle("Auto Dodge", "🤸", function(s) States.AutoDodge = s end)
+CreateToggle("Parkour", "🧗", function(s) States.Parkour = s end)
+CreateToggle("Infinite Jump", "🔁", function(s) States.InfiniteJump = s end)
+CreateToggle("Slow Fall", "🍃", function(s) States.SlowFall = s end)
+CreateToggle("No Slow", "⏩", function(s) States.NoSlow = s end)
+CreateSlider("Thrust Power", "🚀", 50, 500, 100, function(v) States.ThrustPower = v end)
+CreateToggle("Body Thrust", "💨", function(s) States.BodyThrust = s end)
+CreateToggle("Anti Gravity", "🌌", function(s) States.AntiGravity = s end)
+CreateSlider("Fly Mode", "🕊️", 1, 3, 1, function(v) States.FlyMode = v end)
+
+-- Player defesa
+CreateSection("🛡️ PLAYER DEFENSE")
+CreateToggle("Anti Knockback", "🛡️➖", function(s) States.AntiKnockback = s end)
+CreateToggle("Anti Stun", "💫", function(s) States.AntiStun = s end)
+CreateToggle("Anti Fire", "🔥❌", function(s) States.AntiFire = s end)
+CreateToggle("Anti Poison", "☠️❌", function(s) States.AntiPoison = s end)
+CreateToggle("Infinite Stamina", "⚡", function(s) States.InfiniteStamina = s end)
+CreateToggle("No Breath", "🫁", function(s) States.NoBreath = s end)
+
+-- Camera extra
+CreateSection("🎥 CAMERA EXTRA")
+CreateToggle("Camera Shake", "📳", function(s) States.CamShake = s end)
+CreateToggle("Lock Cam", "🔒", function(s) States.LockCam = s end)
+CreateToggle("First Person", "👁️", function(s) States.FirstPerson = s end)
+CreateToggle("Third Person", "👤", function(s) States.ThirdPerson = s end)
+
+-- Clima
+CreateSection("🌦️ CLIMA")
+CreateButton("Day", "☀️", function() Lighting:SetMinutesAfterMidnight(12*60) end)
+CreateButton("Night", "🌙", function() Lighting:SetMinutesAfterMidnight(0) end)
+CreateToggle("Rain", "🌧️", function(s) States.Rain = s end)
+CreateToggle("Snow", "❄️", function(s) States.Snow = s end)
+CreateToggle("Wind", "💨", function(s) States.Wind = s end)
+
+-- Mundo extra
+CreateSection("🌎 MUNDO EXTRA")
+CreateButton("Remove Water", "💧", function()
+    for _, v in ipairs(Workspace:GetDescendants()) do
+        if v:IsA("Terrain") then v.WaterSize = 0 end
+    end
+end)
+CreateButton("Remove Terrain", "⛰️", function() Workspace.Terrain:Clear() end)
+CreateButton("Remove Decals", "🖼️", function()
+    for _, v in ipairs(Workspace:GetDescendants()) do
+        if v:IsA("Decal") or v:IsA("Texture") then v:Destroy() end
+    end
+end)
+CreateButton("Delete All Parts", "💣", function()
+    for _, v in ipairs(Workspace:GetDescendants()) do
+        if v:IsA("BasePart") and not v:IsA("Terrain") then v:Destroy() end
+    end
+end)
+
+-- Visuais extra
+CreateSection("👁️ VISUALS EXTRA")
+CreateToggle("Chams", "👤✨", function(s) States.Chams = s end)
+CreateToggle("Wireframe", "📐", function(s) States.Wireframe = s end)
+CreateToggle("X-Ray", "🩻", function(s) States.XRay = s end)
+CreateToggle("Health Bar ESP", "❤️", function(s) States.ESP_HealthBar = s end)
+CreateToggle("Name ESP", "📛", function(s) States.ESP_Names = s end)
+CreateToggle("Distance ESP", "📏", function(s) States.ESP_Distance = s end)
+
+-- Combate
+CreateSection("🔫 COMBATE")
+CreateToggle("Silent Aim", "🤫", function(s) States.SilentAim = s end)
+CreateToggle("No Recoil", "🔫➖", function(s) States.NoRecoil = s end)
+CreateToggle("No Spread", "🎯", function(s) States.NoSpread = s end)
+CreateToggle("Rapid Fire", "🔥", function(s) States.RapidFire = s end)
+CreateToggle("Infinite Ammo", "∞", function(s) States.InfAmmo = s end)
+CreateButton("Infinite Clip", "🔄", function()
+    local tool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool")
+    if tool and tool:FindFirstChild("Ammo") then
+        tool.Ammo.Value = math.huge
+    end
+end)
+
+-- Automação
+CreateSection("🤖 AUTOMAÇÃO")
+CreateToggle("Auto Farm", "🧑‍🌾", function(s) States.AutoFarm = s end)
+CreateToggle("Auto Quest", "📜", function(s) States.AutoQuest = s end)
+CreateToggle("Auto Collect", "🧲", function(s) States.AutoCollect = s end)
+CreateToggle("Auto Sell", "💰", function(s) States.AutoSell = s end)
+CreateToggle("Auto Buy", "🛒", function(s) States.AutoBuy = s end)
+CreateButton("Auto Equip Best", "⚔️", function()
+    local tools = LocalPlayer.Backpack:GetChildren()
+    local best = nil
+    for _, t in ipairs(tools) do
+        if t:IsA("Tool") then
+            if not best or t:GetAttribute("Damage") > best:GetAttribute("Damage") then
+                best = t
+            end
+        end
+    end
+    if best then LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):EquipTool(best) end
+end)
+
+-- Explosivos
+CreateSection("💣 EXPLOSIVOS")
+CreateButton("Explode Self", "💥", function()
+    if LocalPlayer.Character then
+        local e = Instance.new("Explosion")
+        e.Position = LocalPlayer.Character:GetPrimaryPartCFrame().Position
+        e.BlastPressure = 1000000
+        e.Parent = Workspace
+    end
+end)
+CreateButton("Nuke Self", "☢️", function()
+    for i = 1, 10 do
+        spawn(function()
+            local e = Instance.new("Explosion")
+            e.Position = LocalPlayer.Character:GetPrimaryPartCFrame().Position + Vector3.new(math.random(-50,50), 0, math.random(-50,50))
+            e.BlastPressure = 500000
+            e.Parent = Workspace
+        end)
+    end
+end)
+CreateToggle("Time Bomb", "💣⏰", function(s) States.TimeBomb = s; if s then States.BombTime = tick() + 10 end end)
+CreateSlider("Bomb Timer", "⏱️", 1, 30, 10, function(v) States.BombTimer = v end)
+
+-- Física
+CreateSection("🧲 FÍSICA")
+CreateToggle("Magneto", "🧲", function(s) States.Magneto = s end)
+CreateSlider("Magneto Force", "💪", 100, 2000, 500, function(v) States.MagnetoForce = v end)
+CreateToggle("Tornado", "🌪️", function(s) States.Tornado = s end)
+CreateButton("Freeze All", "❄️", function()
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr.Character then plr.Character.HumanoidRootPart.Anchored = true end
+    end
+end)
+CreateButton("Unfreeze All", "🔥", function()
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr.Character then plr.Character.HumanoidRootPart.Anchored = false end
+    end
+end)
+
+-- Server
+CreateSection("📡 SERVER")
+CreateButton("Crash Server", "💀", function() while true do end end)
+CreateToggle("Fake Lag", "⏸️", function(s) States.FakeLag = s end)
+CreateSlider("Lag Amount", "📶", 50, 500, 200, function(v) States.LagAmount = v end)
+CreateButton("Stun All", "💫", function()
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer and plr.Character then
+            plr.Character.HumanoidRootPart.Anchored = true
+        end
+    end
+end)
+
+-- Novos comandos para o parser
+local oldParse = ParseCommand
+ParseCommand = function(cmd)
+    cmd = cmd:lower()
+    local args = {}
+    for word in cmd:gmatch("%S+") do table.insert(args, word) end
+    if #args == 0 then return end
+    local command = args[1]
+    local value = tonumber(args[2]) or args[2]
+
+    if command == "longjump" then States.LongJump = value == "on" or value == true
+    elseif command == "moonjump" then States.MoonJump = value == "on" or value == true
+    elseif command == "autoswim" then States.AutoSwim = value == "on" or value == true
+    elseif command == "autorun" then States.AutoRun = value == "on" or value == true
+    elseif command == "antiknockback" then States.AntiKnockback = value == "on" or value == true
+    elseif command == "antistun" then States.AntiStun = value == "on" or value == true
+    elseif command == "antifire" then States.AntiFire = value == "on" or value == true
+    elseif command == "antipoison" then States.AntiPoison = value == "on" or value == true
+    elseif command == "infinitestamina" then States.InfiniteStamina = value == "on" or value == true
+    elseif command == "nobreath" then States.NoBreath = value == "on" or value == true
+    elseif command == "camshake" then States.CamShake = value == "on" or value == true
+    elseif command == "lockcam" then States.LockCam = value == "on" or value == true
+    elseif command == "firstperson" then States.FirstPerson = value == "on" or value == true
+    elseif command == "thirdperson" then States.ThirdPerson = value == "on" or value == true
+    elseif command == "day" then Lighting:SetMinutesAfterMidnight(12*60)
+    elseif command == "night" then Lighting:SetMinutesAfterMidnight(0)
+    elseif command == "rain" then States.Rain = value == "on" or value == true
+    elseif command == "snow" then States.Snow = value == "on" or value == true
+    elseif command == "wind" then States.Wind = value == "on" or value == true
+    elseif command == "removewater" then
+        for _, v in ipairs(Workspace:GetDescendants()) do if v:IsA("Terrain") then v.WaterSize = 0 end end
+    elseif command == "removeterrain" then Workspace.Terrain:Clear()
+    elseif command == "chams" then States.Chams = value == "on" or value == true
+    elseif command == "wireframe" then States.Wireframe = value == "on" or value == true
+    elseif command == "xray" then States.XRay = value == "on" or value == true
+    elseif command == "healthbar" then States.ESP_HealthBar = value == "on" or value == true
+    elseif command == "nameesp" then States.ESP_Names = value == "on" or value == true
+    elseif command == "silentaim" then States.SilentAim = value == "on" or value == true
+    elseif command == "norecoil" then States.NoRecoil = value == "on" or value == true
+    elseif command == "nospread" then States.NoSpread = value == "on" or value == true
+    elseif command == "rapidfire" then States.RapidFire = value == "on" or value == true
+    elseif command == "infammo" then States.InfAmmo = value == "on" or value == true
+    elseif command == "autofarm" then States.AutoFarm = value == "on" or value == true
+    elseif command == "autoquest" then States.AutoQuest = value == "on" or value == true
+    elseif command == "autocollect" then States.AutoCollect = value == "on" or value == true
+    elseif command == "autosell" then States.AutoSell = value == "on" or value == true
+    elseif command == "autobuy" then States.AutoBuy = value == "on" or value == true
+    elseif command == "crashserver" then while true do end end
+    elseif command == "fakelag" and tonumber(args[2]) then States.FakeLag = true; States.LagAmount = tonumber(args[2])
+    elseif command == "antifall" then States.AntiFall = value == "on" or value == true
+    elseif command == "autododge" then States.AutoDodge = value == "on" or value == true
+    elseif command == "parkour" then States.Parkour = value == "on" or value == true
+    elseif command == "flymode" then States.FlyMode = args[2]
+    elseif command == "infinitejump" then States.InfiniteJump = value == "on" or value == true
+    elseif command == "slowfall" then States.SlowFall = value == "on" or value == true
+    elseif command == "noslow" then States.NoSlow = value == "on" or value == true
+    elseif command == "bodythrust" and tonumber(args[2]) then States.BodyThrust = true; States.ThrustPower = tonumber(args[2])
+    elseif command == "antigravity" then States.AntiGravity = value == "on" or value == true
+    elseif command == "magneto" and tonumber(args[2]) then States.Magneto = true; States.MagnetoForce = tonumber(args[2])
+    elseif command == "tornado" then States.Tornado = value == "on" or value == true
+    elseif command == "explodeself" then
+        if LocalPlayer.Character then
+            local e = Instance.new("Explosion"); e.Position = LocalPlayer.Character:GetPrimaryPartCFrame().Position; e.BlastPressure = 1000000; e.Parent = Workspace
+        end
+    elseif command == "nukeself" then
+        for i = 1, 10 do spawn(function() local e = Instance.new("Explosion"); e.Position = LocalPlayer.Character:GetPrimaryPartCFrame().Position + Vector3.new(math.random(-50,50), 0, math.random(-50,50)); e.BlastPressure = 500000; e.Parent = Workspace end) end
+    elseif command == "timebomb" and tonumber(args[2]) then States.TimeBomb = true; States.BombTime = tick() + tonumber(args[2])
+    elseif command == "stunall" then for _, plr in ipairs(Players:GetPlayers()) do if plr ~= LocalPlayer and plr.Character then plr.Character.HumanoidRootPart.Anchored = true end end
+    elseif command == "freezeall" then for _, plr in ipairs(Players:GetPlayers()) do if plr.Character then plr.Character.HumanoidRootPart.Anchored = true end end
+    elseif command == "unfreezeall" then for _, plr in ipairs(Players:GetPlayers()) do if plr.Character then plr.Character.HumanoidRootPart.Anchored = false end end
+    elseif command == "deleteall" then for _, v in ipairs(Workspace:GetDescendants()) do if v:IsA("Part") then v:Destroy() end end
+    elseif command == "removedecals" then for _, v in ipairs(Workspace:GetDescendants()) do if v:IsA("Decal") then v:Destroy() end end
+    end
+    oldParse(cmd)
+end
+
+-- Novos loops dentro do RenderStepped (mesclagem)
+local oldRenderStepped = RunService.RenderStepped
+RunService.RenderStepped:Connect(function()
+    oldRenderStepped()
+    local char = LocalPlayer.Character
+    if not char then return end
+    local humanoid = char:FindFirstChild("Humanoid")
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+
+    if States.LongJump and humanoid and humanoid.Jump then
+        humanoid.Jump = false
+        hrp.Velocity = hrp.CFrame.LookVector * 50 + Vector3.new(0, 50, 0)
+    end
+    if States.MoonJump then Workspace.Gravity = 10
+    elseif not States.AntiGravity then Workspace.Gravity = States.Gravity end
+    if States.AutoSwim and humanoid and humanoid.FloorMaterial == Enum.Material.Water then
+        humanoid.WalkSpeed = States.WalkSpeed or 32
+    end
+    if States.AntiKnockback and hrp then hrp.Velocity = Vector3.new(0, hrp.Velocity.Y, 0) end
+    if States.CamShake then Camera.CFrame = Camera.CFrame * CFrame.new(math.random(-1,1)/10, math.random(-1,1)/10, 0) end
+    if States.LockCam and char:FindFirstChild("Head") then Camera.CFrame = CFrame.new(Camera.CFrame.Position, char.Head.Position) end
+    if States.FirstPerson then
+        Camera.CameraType = Enum.CameraType.Scriptable
+        if char:FindFirstChild("Head") then Camera.CameraSubject = char.Head end
+    elseif States.ThirdPerson then
+        Camera.CameraType = Enum.CameraType.Custom
+    end
+    if States.Chams then for _, part in ipairs(char:GetDescendants()) do if part:IsA("BasePart") and part.Transparency < 1 then part.Color = Color3.new(1,0,0) end end end
+    if States.Wireframe then for _, part in ipairs(char:GetDescendants()) do if part:IsA("BasePart") then part.Wireframe = true end end end
+    if States.XRay then for _, v in ipairs(Workspace:GetDescendants()) do if v:IsA("BasePart") and v.Transparency < 0.5 then v.Transparency = 0.8 end end end
+    if States.AntiFall and hrp and hrp.Velocity.Y < -50 then hrp.Velocity = Vector3.new(0, 0, 0) end
+    if States.InfiniteJump and humanoid then humanoid.Jump = true end
+    if States.SlowFall and hrp then hrp.Velocity = hrp.Velocity * Vector3.new(1, 0.5, 1) end
+    if States.NoSlow and humanoid then humanoid.WalkSpeed = math.max(humanoid.WalkSpeed, 32) end
+    if States.BodyThrust and hrp then hrp.Velocity = hrp.Velocity + Camera.CFrame.LookVector * States.ThrustPower * 0.1 end
+    if States.AntiGravity then Workspace.Gravity = -50 end
+    if States.Magneto and hrp then
+        for _, obj in ipairs(Workspace:GetDescendants()) do
+            if obj:IsA("BasePart") and obj:IsDescendantOf(Workspace) then
+                local dist = (hrp.Position - obj.Position).Magnitude
+                if dist < 50 then obj.Velocity = (hrp.Position - obj.Position).Unit * States.MagnetoForce end
+            end
+        end
+    end
+    if States.Tornado and hrp then
+        for _, plr in ipairs(Players:GetPlayers()) do
+            if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                local otherHrp = plr.Character.HumanoidRootPart
+                local dir = (otherHrp.Position - hrp.Position).Unit
+                otherHrp.Velocity = Vector3.new(dir.X * 100, 50, dir.Z * 100)
+            end
+        end
+    end
+    if States.FakeLag then task.wait(States.LagAmount / 1000) end
+    if States.TimeBomb and tick() > States.BombTime then
+        for i = 1, 5 do
+            local e = Instance.new("Explosion"); e.Position = hrp.Position + Vector3.new(math.random(-20,20), 0, math.random(-20,20)); e.BlastPressure = 500000; e.Parent = Workspace
+        end
+        States.TimeBomb = false
+    end
+end)
+
+return "Parte 3 carregada. Prossiga para a última parte."
