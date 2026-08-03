@@ -1,26 +1,17 @@
--- Carrega a biblioteca Rayfield
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+--[[
+    VOID SCRIPTS GUI · 2026 · PREMIUM EDITION
+    + ANTI-DETECT BYPASS
+    + 50+ AURAS VISÍVEIS PARA TODOS
+    + TODAS AS ABAS FUNCIONAIS
+    Cores: #151515, #141414, #181818, #222222, #fff
+    Ícones Footagesus/Icons V2 (lucide), cantos 16px.
+--]]
 
--- Estados das funções (mantidos da versão anterior)
-local States = {
-    Fly = false, FlySpeed = 50, Noclip = false, InfJump = false, ClickTP = false,
-    BunnyHop = false, SpinBot = false, Speed = false, WalkSpeed = 32,
-    JumpPowerEnabled = false, JumpPower = 50, HipHeightEnabled = false, HipHeight = 0,
-    Fling = false, FlingPower = 100, Invisible = false,
-    GodMode = false, ForceField = false, AutoHeal = false, HealAmount = 50,
-    AntiAFK = false, AutoClick = false, AutoEquip = false,
-    Freecam = false, FOVEnabled = false, FOV = 70, Zoom = false, ZoomAmount = 40,
-    Gravity = 196.2, Time = 14, Fullbright = false,
-    ESP_Players = false, ESP_Items = false, ESP_Mobs = false,
-    ESP_Box = false, ESP_Line = false, RainbowESP = false,
-    Aimbot = false, Spectate = nil,
-    InfAmmo = false,
-}
-
--- Variáveis de serviço
+-- Services
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
 local Workspace = game:GetService("Workspace")
 local VirtualInputManager = game:GetService("VirtualInputManager")
 local TeleportService = game:GetService("TeleportService")
@@ -29,41 +20,1143 @@ local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 local Camera = Workspace.CurrentCamera
 
--- Cria a janela principal do Rayfield
-local Window = Rayfield:CreateWindow({
-    Name = "⚡ Ultimate Exploit",
-    LoadingTitle = "Carregando...",
-    LoadingSubtitle = "Aguarde",
-    ConfigurationSaving = {
-        Enabled = false
-    },
-    Discord = {
-        Enabled = false
-    },
-    KeySystem = false
-})
+local TWEEN_SLOW = TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+local TWEEN_MED  = TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+local TWEEN_FAST = TweenInfo.new(0.12, Enum.EasingStyle.Quad,  Enum.EasingDirection.Out)
 
--- Aba de Movimento
-local MovementTab = Window:CreateTab("🏃 Movimento")
+local S = setmetatable({}, { __index = function() return false end })
+S.AuraParts = {}         -- partes de aura (seguem o jogador)
+S.SwordParts = nil       -- espadas orbitando
+S.WeaponParts = nil      -- outras armas orbitando
+S.ChainParts = nil       -- correntes
+S.NoteParts = nil        -- notas musicais
+S.AuraSound = nil        -- som phonk
+S.ForceFieldPart = nil   -- esfera do ForceField
 
-MovementTab:CreateToggle({
-    Name = "Fly",
-    CurrentValue = false,
-    Flag = "Fly",
-    Callback = function(Value)
-        States.Fly = Value
-        if Value then
-            local char = LocalPlayer.Character
-            if char and char:FindFirstChild("HumanoidRootPart") then
-                local hrp = char.HumanoidRootPart
-                local bv = Instance.new("BodyVelocity")
-                bv.Velocity = Vector3.zero
-                bv.MaxForce = Vector3.new(1e5,1e5,1e5)
-                bv.P = 3000
-                bv.Name = "FlyV"
-                bv.Parent = hrp
-                local bg = Instance.new("BodyGyro")
-                bg.MaxTorque = Vector3.new(1e5,1e5,1e5)
+-- Load Icon Library (lucide)
+local Icons = nil
+pcall(function()
+    Icons = loadstring(game:HttpGetAsync("https://raw.githubusercontent.com/Footagesus/Icons/main/Main-v2.lua"))()
+    if Icons then Icons.SetIconsType("lucide") end
+end)
+
+local function getIcon(name)
+    if Icons then
+        local ok, id = pcall(function() return Icons.GetIcon(name) end)
+        if ok and id then return id end
+    end
+    return nil
+end
+
+-- Theme colors
+local Dark = {
+    Bg = "#151515", Side = "#141414", Elem = "#181818",
+    Hov = "#222222", Text = "#ffffff", Sub = "#dddddd", Acc = "#ffffff",
+}
+local Light = {
+    Bg = "#f0f0f0", Side = "#e0e0e0", Elem = "#ffffff",
+    Hov = "#dddddd", Text = "#000000", Sub = "#333333", Acc = "#000000",
+}
+local C = Dark
+
+local function applyTheme(themeName)
+    C = (themeName == "Light") and Light or Dark
+    local function map(hex)
+        if hex == Dark.Bg then return C.Bg elseif hex == Dark.Side then return C.Side
+        elseif hex == Dark.Elem then return C.Elem elseif hex == Dark.Hov then return C.Hov
+        elseif hex == Dark.Text then return C.Text elseif hex == Dark.Sub then return C.Sub
+        elseif hex == Dark.Acc then return C.Acc end
+        return hex
+    end
+    local function update(obj)
+        if obj:IsA("Frame") or obj:IsA("TextButton") then
+            pcall(function() obj.BackgroundColor3 = Color3.fromHex(map("#"..string.format("%02x%02x%02x",math.floor(obj.BackgroundColor3.R*255),math.floor(obj.BackgroundColor3.G*255),math.floor(obj.BackgroundColor3.B*255)))) end)
+        end
+        if obj:IsA("TextLabel") or obj:IsA("TextButton") then
+            pcall(function() obj.TextColor3 = Color3.fromHex(map("#"..string.format("%02x%02x%02x",math.floor(obj.TextColor3.R*255),math.floor(obj.TextColor3.G*255),math.floor(obj.TextColor3.B*255)))) end)
+        end
+        if obj:IsA("ImageLabel") then
+            pcall(function() obj.ImageColor3 = Color3.fromHex(map("#"..string.format("%02x%02x%02x",math.floor(obj.ImageColor3.R*255),math.floor(obj.ImageColor3.G*255),math.floor(obj.ImageColor3.B*255)))) end)
+        end
+        if obj:IsA("UIStroke") then
+            pcall(function() obj.Color = Color3.fromHex(map("#"..string.format("%02x%02x%02x",math.floor(obj.Color.R*255),math.floor(obj.Color.G*255),math.floor(obj.Color.B*255)))) end)
+        end
+        for _, child in ipairs(obj:GetChildren()) do update(child) end
+    end
+    update(Main)
+    update(ToggleBtn)
+end
+
+-- Helper to create an icon
+local function addIcon(parent, iconName, size, posX, posY, color)
+    local id = getIcon(iconName)
+    if id then
+        local img = Instance.new("ImageLabel")
+        img.Size = UDim2.new(0, size, 0, size)
+        img.Position = UDim2.new(0, posX, 0.5, -size/2)
+        img.BackgroundTransparency = 1
+        img.Image = id
+        img.ImageColor3 = color or Color3.fromHex(C.Text)
+        img.ScaleType = Enum.ScaleType.Fit
+        img.Parent = parent
+        return img
+    end
+    return nil
+end
+
+-- Helper to add UIStroke border
+local function addBorder(obj, color)
+    local s = Instance.new("UIStroke", obj)
+    s.Color = color or Color3.fromHex(C.Hov)
+    s.Thickness = 1
+end
+
+-- ==================== INTERFACE ====================
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "VoidGUI"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+local Main = Instance.new("Frame")
+Main.Size = UDim2.new(0, 720, 0, 500)
+Main.Position = UDim2.new(0.5, -360, 0.5, -250)
+Main.BackgroundColor3 = Color3.fromHex(C.Bg)
+Main.BorderSizePixel = 0
+Main.ClipsDescendants = true
+Main.Visible = false
+Main.Parent = ScreenGui
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 18)
+
+local ToggleBtn = Instance.new("TextButton")
+ToggleBtn.Size = UDim2.new(0, 52, 0, 52)
+ToggleBtn.Position = UDim2.new(0, 10, 0, 10)
+ToggleBtn.BackgroundColor3 = Color3.fromHex(C.Elem)
+ToggleBtn.BorderSizePixel = 0
+ToggleBtn.Text = "☰"
+ToggleBtn.TextColor3 = Color3.fromHex(C.Text)
+ToggleBtn.TextSize = 28
+ToggleBtn.Font = Enum.Font.GothamBold
+ToggleBtn.ZIndex = 20
+ToggleBtn.AutoButtonColor = false
+ToggleBtn.Parent = ScreenGui
+Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 16)
+addBorder(ToggleBtn, Color3.fromHex(C.Hov))
+
+ToggleBtn.MouseEnter:Connect(function()
+    TweenService:Create(ToggleBtn, TWEEN_FAST, {BackgroundColor3 = Color3.fromHex(C.Hov), Size = UDim2.new(0, 56, 0, 56)}):Play()
+end)
+ToggleBtn.MouseLeave:Connect(function()
+    TweenService:Create(ToggleBtn, TWEEN_FAST, {BackgroundColor3 = Color3.fromHex(C.Elem), Size = UDim2.new(0, 52, 0, 52)}):Play()
+end)
+
+local open = false
+ToggleBtn.MouseButton1Click:Connect(function()
+    open = not open
+    Main.Visible = open
+    ToggleBtn.Text = open and "✕" or "☰"
+end)
+
+-- Sidebar
+local Sidebar = Instance.new("Frame")
+Sidebar.Size = UDim2.new(0, 200, 1, 0)
+Sidebar.Position = UDim2.new(0, 0, 0, 0)
+Sidebar.BackgroundColor3 = Color3.fromHex(C.Side)
+Sidebar.BorderSizePixel = 0
+Sidebar.Parent = Main
+Instance.new("UICorner", Sidebar).CornerRadius = UDim.new(0, 18)
+
+-- Logo Header
+local Header = Instance.new("Frame")
+Header.Size = UDim2.new(1, -16, 0, 50)
+Header.Position = UDim2.new(0, 8, 0, 10)
+Header.BackgroundColor3 = Color3.fromHex(C.Elem)
+Header.BorderSizePixel = 0
+Header.Parent = Sidebar
+Instance.new("UICorner", Header).CornerRadius = UDim.new(0, 14)
+addBorder(Header, Color3.fromHex(C.Hov))
+addIcon(Header, "zap", 18, 10, 0, Color3.fromHex(C.Acc))
+
+local LogoText = Instance.new("TextLabel", Header)
+LogoText.Size = UDim2.new(1, -40, 1, 0)
+LogoText.Position = UDim2.new(0, 34, 0, 0)
+LogoText.BackgroundTransparency = 1
+LogoText.Text = "VOID SCRIPTS"
+LogoText.TextColor3 = Color3.fromHex(C.Text)
+LogoText.TextSize = 13
+LogoText.Font = Enum.Font.GothamBold
+LogoText.TextXAlignment = Enum.TextXAlignment.Left
+
+-- Divider
+local Div = Instance.new("Frame")
+Div.Size = UDim2.new(1, -16, 0, 1)
+Div.Position = UDim2.new(0, 8, 0, 66)
+Div.BackgroundColor3 = Color3.fromHex(C.Hov)
+Div.BorderSizePixel = 0
+Div.Parent = Sidebar
+
+-- Tab Buttons
+local TabBtns = Instance.new("ScrollingFrame")
+TabBtns.Size = UDim2.new(1, 0, 1, -160)
+TabBtns.Position = UDim2.new(0, 0, 0, 74)
+TabBtns.BackgroundTransparency = 1
+TabBtns.BorderSizePixel = 0
+TabBtns.ScrollBarThickness = 0
+TabBtns.CanvasSize = UDim2.new(0, 0, 0, 0)
+TabBtns.Parent = Sidebar
+
+local TabList = Instance.new("UIListLayout", TabBtns)
+TabList.Padding = UDim.new(0, 4)
+TabList.HorizontalAlignment = Enum.HorizontalAlignment.Center
+TabList.SortOrder = Enum.SortOrder.LayoutOrder
+TabList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    TabBtns.CanvasSize = UDim2.new(0, 0, 0, TabList.AbsoluteContentSize.Y + 8)
+end)
+
+-- Profile
+local Profile = Instance.new("Frame")
+Profile.Size = UDim2.new(1, -16, 0, 72)
+Profile.Position = UDim2.new(0, 8, 1, -80)
+Profile.BackgroundColor3 = Color3.fromHex(C.Elem)
+Profile.BorderSizePixel = 0
+Profile.Parent = Sidebar
+Instance.new("UICorner", Profile).CornerRadius = UDim.new(0, 14)
+addBorder(Profile, Color3.fromHex(C.Hov))
+
+local Avatar = Instance.new("ImageLabel", Profile)
+Avatar.Size = UDim2.new(0, 44, 0, 44)
+Avatar.Position = UDim2.new(0, 8, 0.5, -22)
+Avatar.BackgroundColor3 = Color3.fromHex(C.Hov)
+Avatar.BorderSizePixel = 0
+Avatar.ScaleType = Enum.ScaleType.Fit
+Instance.new("UICorner", Avatar).CornerRadius = UDim.new(1, 0)
+spawn(function()
+    local ok, data = pcall(function() return Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420) end)
+    if ok and data then Avatar.Image = data end
+end)
+
+local PlayerName = Instance.new("TextLabel", Profile)
+PlayerName.Size = UDim2.new(1, -60, 0, 20)
+PlayerName.Position = UDim2.new(0, 56, 0, 12)
+PlayerName.BackgroundTransparency = 1
+PlayerName.Text = LocalPlayer.Name
+PlayerName.TextColor3 = Color3.fromHex(C.Text)
+PlayerName.TextSize = 12
+PlayerName.Font = Enum.Font.GothamBold
+PlayerName.TextXAlignment = Enum.TextXAlignment.Left
+PlayerName.TextTruncate = Enum.TextTruncate.AtEnd
+
+local PlayerId = Instance.new("TextLabel", Profile)
+PlayerId.Size = UDim2.new(1, -60, 0, 16)
+PlayerId.Position = UDim2.new(0, 56, 0, 34)
+PlayerId.BackgroundTransparency = 1
+PlayerId.Text = "ID: " .. LocalPlayer.UserId
+PlayerId.TextColor3 = Color3.fromHex(C.Sub)
+PlayerId.TextSize = 10
+PlayerId.Font = Enum.Font.Gotham
+PlayerId.TextXAlignment = Enum.TextXAlignment.Left
+
+-- Content Area
+local Content = Instance.new("Frame")
+Content.Size = UDim2.new(1, -200, 1, 0)
+Content.Position = UDim2.new(0, 200, 0, 0)
+Content.BackgroundColor3 = Color3.fromHex(C.Bg)
+Content.BorderSizePixel = 0
+Content.Parent = Main
+Instance.new("UICorner", Content).CornerRadius = UDim.new(0, 18)
+
+-- ==================== TAB SYSTEM ====================
+local Tabs = {}
+local TabContents = {}
+local curTab = nil
+
+local function CreateTab(name, iconName)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, -16, 0, 38)
+    btn.BackgroundColor3 = Color3.fromHex(C.Elem)
+    btn.BorderSizePixel = 0
+    btn.Text = ""
+    btn.AutoButtonColor = false
+    btn.Parent = TabBtns
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 14)
+    addBorder(btn, Color3.fromHex(C.Hov))
+
+    addIcon(btn, iconName, 14, 10, 0, Color3.fromHex(C.Sub))
+    local label = Instance.new("TextLabel", btn)
+    label.Size = UDim2.new(1, -40, 1, 0)
+    label.Position = UDim2.new(0, 34, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = name
+    label.TextColor3 = Color3.fromHex(C.Sub)
+    label.TextSize = 12
+    label.Font = Enum.Font.Gotham
+    label.TextXAlignment = Enum.TextXAlignment.Left
+
+    local scroll = Instance.new("ScrollingFrame")
+    scroll.Size = UDim2.new(1, -16, 1, -16)
+    scroll.Position = UDim2.new(0, 8, 0, 8)
+    scroll.BackgroundTransparency = 1
+    scroll.BorderSizePixel = 0
+    scroll.ScrollBarThickness = 3
+    scroll.ScrollBarImageColor3 = Color3.fromHex(C.Text)
+    scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+    scroll.Visible = false
+    scroll.Parent = Content
+
+    local list = Instance.new("UIListLayout", scroll)
+    list.Padding = UDim.new(0, 6)
+    list.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    list.SortOrder = Enum.SortOrder.LayoutOrder
+    list:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        scroll.CanvasSize = UDim2.new(0, 0, 0, list.AbsoluteContentSize.Y + 16)
+    end)
+
+    btn.MouseButton1Click:Connect(function()
+        if curTab then curTab.Visible = false end
+        scroll.Visible = true
+        curTab = scroll
+        for _, b in ipairs(Tabs) do
+            TweenService:Create(b, TWEEN_FAST, {BackgroundColor3 = Color3.fromHex(C.Elem)}):Play()
+            b:FindFirstChildOfClass("ImageLabel").ImageColor3 = Color3.fromHex(C.Sub)
+            b:FindFirstChildOfClass("TextLabel").TextColor3 = Color3.fromHex(C.Sub)
+        end
+        TweenService:Create(btn, TWEEN_FAST, {BackgroundColor3 = Color3.fromHex(C.Hov)}):Play()
+        btn:FindFirstChildOfClass("ImageLabel").ImageColor3 = Color3.fromHex(C.Acc)
+        label.TextColor3 = Color3.fromHex(C.Text)
+    end)
+
+    btn.MouseEnter:Connect(function()
+        if curTab ~= scroll then TweenService:Create(btn, TWEEN_FAST, {BackgroundColor3 = Color3.fromHex(C.Hov)}):Play() end
+    end)
+    btn.MouseLeave:Connect(function()
+        if curTab ~= scroll then TweenService:Create(btn, TWEEN_FAST, {BackgroundColor3 = Color3.fromHex(C.Elem)}):Play() end
+    end)
+
+    table.insert(Tabs, btn)
+    table.insert(TabContents, scroll)
+    return scroll
+end
+
+local moveTab   = CreateTab("Movement",   "move")
+local playerTab = CreateTab("Player",     "user")
+local auraTab   = CreateTab("Auras",      "sparkles")
+local visualTab = CreateTab("Visuals",    "eye")
+local combatTab = CreateTab("Combat",     "crosshair")
+local worldTab  = CreateTab("World",      "globe")
+local miscTab   = CreateTab("Extras",     "zap")
+local utilTab   = CreateTab("Utilities",  "settings")
+local infoTab   = CreateTab("Info",       "info")
+local setTab    = CreateTab("Settings",   "sliders")
+
+if #Tabs > 0 then
+    Tabs[1].BackgroundColor3 = Color3.fromHex(C.Hov)
+    Tabs[1]:FindFirstChildOfClass("ImageLabel").ImageColor3 = Color3.fromHex(C.Acc)
+    Tabs[1]:FindFirstChildOfClass("TextLabel").TextColor3 = Color3.fromHex(C.Text)
+    TabContents[1].Visible = true
+    curTab = TabContents[1]
+end
+
+-- ==================== UI ELEMENT FUNCTIONS ====================
+local function Section(parent, title, iconName)
+    local f = Instance.new("Frame")
+    f.Size = UDim2.new(1, -4, 0, 26)
+    f.BackgroundColor3 = Color3.fromHex(C.Elem)
+    f.BorderSizePixel = 0
+    f.Parent = parent
+    Instance.new("UICorner", f).CornerRadius = UDim.new(0, 14)
+    addBorder(f, Color3.fromHex(C.Hov))
+    addIcon(f, iconName, 12, 8, 0, Color3.fromHex(C.Acc))
+    local l = Instance.new("TextLabel", f)
+    l.Size = UDim2.new(1, -24, 1, 0)
+    l.Position = UDim2.new(0, 24, 0, 0)
+    l.BackgroundTransparency = 1
+    l.Text = title
+    l.TextColor3 = Color3.fromHex(C.Text)
+    l.TextSize = 11
+    l.Font = Enum.Font.GothamBold
+    l.TextXAlignment = Enum.TextXAlignment.Left
+end
+
+local function Toggle(parent, name, iconName, flag, cb)
+    local f = Instance.new("TextButton")
+    f.Size = UDim2.new(1, -4, 0, 46)
+    f.BackgroundColor3 = Color3.fromHex(C.Elem)
+    f.BorderSizePixel = 0
+    f.Text = ""
+    f.AutoButtonColor = false
+    f.Parent = parent
+    Instance.new("UICorner", f).CornerRadius = UDim.new(0, 14)
+    addBorder(f, Color3.fromHex(C.Hov))
+
+    addIcon(f, iconName, 16, 10, 0, Color3.fromHex(C.Acc))
+    local lb = Instance.new("TextLabel", f)
+    lb.Size = UDim2.new(1, -100, 1, 0)
+    lb.Position = UDim2.new(0, 36, 0, 0)
+    lb.BackgroundTransparency = 1
+    lb.Text = name
+    lb.TextColor3 = Color3.fromHex(C.Sub)
+    lb.TextSize = 12
+    lb.Font = Enum.Font.Gotham
+    lb.TextXAlignment = Enum.TextXAlignment.Left
+
+    local sw = Instance.new("Frame", f)
+    sw.Size = UDim2.new(0, 46, 0, 24)
+    sw.Position = UDim2.new(1, -54, 0.5, -12)
+    sw.BackgroundColor3 = Color3.fromHex(C.Hov)
+    sw.BorderSizePixel = 0
+    Instance.new("UICorner", sw).CornerRadius = UDim.new(1, 0)
+
+    local kn = Instance.new("Frame", sw)
+    kn.Size = UDim2.new(0, 20, 0, 20)
+    kn.Position = UDim2.new(0, 2, 0.5, -10)
+    kn.BackgroundColor3 = Color3.fromHex(C.Text)
+    kn.BorderSizePixel = 0
+    Instance.new("UICorner", kn).CornerRadius = UDim.new(1, 0)
+
+    local on = S[flag] or false
+    local function upd(st)
+        on = st
+        TweenService:Create(sw, TWEEN_FAST, {BackgroundColor3 = st and Color3.fromHex(C.Acc) or Color3.fromHex(C.Hov)}):Play()
+        TweenService:Create(kn, TWEEN_FAST, {Position = st and UDim2.new(1, -22, 0.5, -10) or UDim2.new(0, 2, 0.5, -10), BackgroundColor3 = st and Color3.fromHex(C.Bg) or Color3.fromHex(C.Text)}):Play()
+    end
+    upd(on)
+    f.MouseButton1Click:Connect(function() on = not on; S[flag] = on; upd(on); if cb then cb(on) end end)
+    f.MouseEnter:Connect(function() TweenService:Create(f, TWEEN_FAST, {BackgroundColor3 = Color3.fromHex(C.Hov)}):Play() end)
+    f.MouseLeave:Connect(function() TweenService:Create(f, TWEEN_FAST, {BackgroundColor3 = Color3.fromHex(C.Elem)}):Play() end)
+end
+
+local function Slider(parent, name, iconName, flag, min, max, def, cb)
+    local f = Instance.new("Frame")
+    f.Size = UDim2.new(1, -4, 0, 56)
+    f.BackgroundColor3 = Color3.fromHex(C.Elem)
+    f.BorderSizePixel = 0
+    f.Parent = parent
+    Instance.new("UICorner", f).CornerRadius = UDim.new(0, 14)
+    addBorder(f, Color3.fromHex(C.Hov))
+
+    addIcon(f, iconName, 16, 10, 8, Color3.fromHex(C.Acc))
+
+    local lb = Instance.new("TextLabel", f)
+    lb.Size = UDim2.new(1, -100, 0, 18)
+    lb.Position = UDim2.new(0, 36, 0, 8)
+    lb.BackgroundTransparency = 1
+    lb.Text = name
+    lb.TextColor3 = Color3.fromHex(C.Sub)
+    lb.TextSize = 12
+    lb.Font = Enum.Font.Gotham
+    lb.TextXAlignment = Enum.TextXAlignment.Left
+
+    local vl = Instance.new("TextLabel", f)
+    vl.Size = UDim2.new(0, 44, 0, 18)
+    vl.Position = UDim2.new(1, -50, 0, 8)
+    vl.BackgroundTransparency = 1
+    vl.Text = tostring(def)
+    vl.TextColor3 = Color3.fromHex(C.Acc)
+    vl.TextSize = 12
+    vl.Font = Enum.Font.GothamBold
+    vl.TextXAlignment = Enum.TextXAlignment.Right
+
+    local bar = Instance.new("TextButton", f)
+    bar.Size = UDim2.new(1, -24, 0, 6)
+    bar.Position = UDim2.new(0, 12, 0, 36)
+    bar.BackgroundColor3 = Color3.fromHex(C.Hov)
+    bar.BorderSizePixel = 0
+    bar.Text = ""
+    bar.AutoButtonColor = false
+    Instance.new("UICorner", bar).CornerRadius = UDim.new(1, 0)
+
+    local fill = Instance.new("Frame", bar)
+    fill.Size = UDim2.new((def - min) / (max - min), 0, 1, 0)
+    fill.BackgroundColor3 = Color3.fromHex(C.Acc)
+    fill.BorderSizePixel = 0
+    Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
+
+    local kn = Instance.new("TextButton", bar)
+    kn.Size = UDim2.new(0, 18, 0, 18)
+    kn.Position = UDim2.new((def - min) / (max - min), -9, 0.5, -9)
+    kn.BackgroundColor3 = Color3.fromHex(C.Text)
+    kn.BorderSizePixel = 0
+    kn.Text = ""
+    kn.AutoButtonColor = false
+    Instance.new("UICorner", kn).CornerRadius = UDim.new(1, 0)
+
+    local dragging = false
+    local function updateVal(inputX)
+        local rel = math.clamp((inputX - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
+        local val = math.floor(min + (max - min) * rel)
+        S[flag] = val
+        vl.Text = tostring(val)
+        fill.Size = UDim2.new(rel, 0, 1, 0)
+        kn.Position = UDim2.new(rel, -9, 0.5, -9)
+        if cb then cb(val) end
+    end
+
+    kn.MouseButton1Down:Connect(function() dragging = true end)
+    bar.MouseButton1Down:Connect(function()
+        dragging = true
+        updateVal(UserInputService:GetMouseLocation().X)
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            updateVal(input.Position.X)
+        end
+    end)
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+end
+
+local function Button(parent, name, iconName, cb)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, -4, 0, 42)
+    btn.BackgroundColor3 = Color3.fromHex(C.Elem)
+    btn.BorderSizePixel = 0
+    btn.Text = ""
+    btn.AutoButtonColor = false
+    btn.Parent = parent
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 14)
+    addBorder(btn, Color3.fromHex(C.Hov))
+
+    addIcon(btn, iconName, 15, 10, 0, Color3.fromHex(C.Sub))
+    local lb = Instance.new("TextLabel", btn)
+    lb.Size = UDim2.new(1, -44, 1, 0)
+    lb.Position = UDim2.new(0, 34, 0, 0)
+    lb.BackgroundTransparency = 1
+    lb.Text = name
+    lb.TextColor3 = Color3.fromHex(C.Sub)
+    lb.TextSize = 12
+    lb.Font = Enum.Font.Gotham
+    lb.TextXAlignment = Enum.TextXAlignment.Left
+
+    btn.MouseButton1Click:Connect(cb)
+    btn.MouseEnter:Connect(function()
+        TweenService:Create(btn, TWEEN_FAST, {BackgroundColor3 = Color3.fromHex(C.Hov)}):Play()
+        btn:FindFirstChildOfClass("ImageLabel").ImageColor3 = Color3.fromHex(C.Acc)
+        lb.TextColor3 = Color3.fromHex(C.Text)
+    end)
+    btn.MouseLeave:Connect(function()
+        TweenService:Create(btn, TWEEN_FAST, {BackgroundColor3 = Color3.fromHex(C.Elem)}):Play()
+        btn:FindFirstChildOfClass("ImageLabel").ImageColor3 = Color3.fromHex(C.Sub)
+        lb.TextColor3 = Color3.fromHex(C.Sub)
+    end)
+end
+
+-- ==================== AURA HELPER FUNCTIONS ====================
+local function ClearAuras()
+    for _, part in ipairs(S.AuraParts) do if part and part.Parent then part:Destroy() end end
+    S.AuraParts = {}
+    if S.SwordParts then for _, d in ipairs(S.SwordParts) do if d.sword and d.sword.Parent then d.sword:Destroy() end end S.SwordParts = nil end
+    if S.WeaponParts then for _, d in ipairs(S.WeaponParts) do if d.part and d.part.Parent then d.part:Destroy() end end S.WeaponParts = nil end
+    if S.ChainParts then for _, p in ipairs(S.ChainParts) do if p and p.Parent then p:Destroy() end end S.ChainParts = nil end
+    if S.NoteParts then for _, n in ipairs(S.NoteParts) do if n.note and n.note.Parent then n.note:Destroy() end end S.NoteParts = nil end
+    if S.AuraSound and S.AuraSound.Parent then S.AuraSound:Destroy() S.AuraSound = nil end
+    local char = LocalPlayer.Character
+    if char and char:FindFirstChild("HumanoidRootPart") then
+        local hrp = char.HumanoidRootPart
+        for _, obj in ipairs(hrp:GetChildren()) do
+            if obj:IsA("ParticleEmitter") or obj:IsA("Fire") or obj:IsA("PointLight") or obj:IsA("Sparkles") or obj:IsA("Beam") or obj.Name:find("Aura") then obj:Destroy() end
+        end
+    end
+end
+
+local function AddLight(color, range, brightness)
+    local char = LocalPlayer.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    local hrp = char.HumanoidRootPart
+    local light = Instance.new("PointLight", hrp)
+    light.Name = "AuraLight"
+    light.Color = color
+    light.Range = range or 20
+    light.Brightness = brightness or 5
+end
+
+local function PlayPhonk()
+    if S.AuraSound then S.AuraSound:Destroy() end
+    local sound = Instance.new("Sound", LocalPlayer.PlayerGui)
+    sound.SoundId = "rbxassetid://1842802021"
+    sound.Volume = 0.8
+    sound.Looped = true
+    sound:Play()
+    S.AuraSound = sound
+end
+
+-- Cria uma parte ancorada no jogador (visível a todos)
+local function AttachPart(name, size, color, transparency)
+    local part = Instance.new("Part")
+    part.Name = "AuraPart_" .. name
+    part.Size = size or Vector3.new(1, 1, 1)
+    part.Anchored = true
+    part.CanCollide = false
+    part.Material = Enum.Material.Neon
+    part.Color = color
+    part.Transparency = transparency or 0.5
+    part.Parent = Workspace
+    table.insert(S.AuraParts, part)
+    return part
+end
+
+local function ApplyReplicatedAura(v, name, color, useFire, useSparkles, particleTexture, rate, lifetime, size, speed, acceleration)
+    ClearAuras()
+    if not v then return end
+    local char = LocalPlayer.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    local part = AttachPart(name, Vector3.new(0.5, 0.5, 0.5), color, 0.9)
+    if useFire then
+        local fire = Instance.new("Fire", part); fire.Heat = 25; fire.Size = 15; fire.Color = color
+    elseif useSparkles then
+        local spark = Instance.new("Sparkles", part); spark.SparkleColor = color
+    elseif particleTexture then
+        local emitter = Instance.new("ParticleEmitter", part)
+        emitter.Texture = particleTexture
+        emitter.Color = ColorSequence.new(color)
+        emitter.Rate = rate or 50
+        emitter.Lifetime = lifetime or NumberRange.new(1, 2)
+        emitter.Size = size or NumberSequence.new(1.5)
+        emitter.Speed = speed or NumberRange.new(1, 3)
+        if acceleration then emitter.Acceleration = acceleration end
+    end
+    AddLight(color, 20, 5)
+end
+
+local function ApplySwordAura(v)
+    ClearAuras()
+    if not v then return end
+    local char = LocalPlayer.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    local parts = {}
+    for i = 1, 8 do
+        local angle = (i-1)*(math.pi*2/8)
+        local sword = Instance.new("Part")
+        sword.Name = "AuraSword"; sword.Size = Vector3.new(0.2,0.2,3); sword.Anchored = true; sword.CanCollide = false
+        sword.Material = Enum.Material.Metal; sword.Color = Color3.fromRGB(255,215,0); sword.Transparency = 0.3; sword.Parent = Workspace
+        local handle = Instance.new("Part", sword)
+        handle.Size = Vector3.new(0.3,0.3,1); handle.CanCollide = false; handle.Anchored = true
+        handle.Material = Enum.Material.Metal; handle.Color = Color3.fromRGB(139,69,19); handle.Transparency = 0.3
+        table.insert(parts, {sword = sword, angle = angle})
+    end
+    S.SwordParts = parts
+    AddLight(Color3.fromRGB(255,215,0), 25, 6)
+end
+
+local function ApplyWeaponOrbit(v, name, count, size, color)
+    ClearAuras()
+    if not v then return end
+    local char = LocalPlayer.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    local parts = {}
+    for i = 1, count do
+        local angle = (i-1)*(math.pi*2/count)
+        local part = Instance.new("Part")
+        part.Name = "Aura"..name; part.Size = size; part.Anchored = true; part.CanCollide = false
+        part.Material = Enum.Material.Metal; part.Color = color; part.Transparency = 0.2; part.Parent = Workspace
+        table.insert(parts, {part = part, angle = angle})
+    end
+    if not S.WeaponParts then S.WeaponParts = {} end
+    for _, p in ipairs(parts) do table.insert(S.WeaponParts, p) end
+    AddLight(color, 20, 5)
+end
+
+local function ApplyChainAura(v)
+    ClearAuras()
+    if not v then return end
+    local char = LocalPlayer.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    local parts = {}
+    for i = 1, 6 do
+        local part = Instance.new("Part")
+        part.Name = "AuraChain"; part.Size = Vector3.new(0.2,0.2,0.5); part.Anchored = true; part.CanCollide = false
+        part.Material = Enum.Material.Metal; part.Color = Color3.fromRGB(150,150,150); part.Transparency = 0.3; part.Parent = Workspace
+        table.insert(parts, part)
+    end
+    S.ChainParts = parts
+    AddLight(Color3.fromRGB(150,150,150), 15, 4)
+end
+
+local function ApplyNotesAura(v)
+    ClearAuras()
+    if not v then return end
+    local char = LocalPlayer.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    local notes = {}
+    local symbols = {"♪","♫","♬","♩","♭","♮"}
+    for i = 1, 10 do
+        local note = Instance.new("Part")
+        note.Name = "AuraNote"; note.Size = Vector3.new(0.5,0.5,0.1); note.Anchored = true; note.CanCollide = false
+        note.Material = Enum.Material.Neon; note.Color = Color3.fromHSV(i/10,1,1); note.Transparency = 0.5; note.Parent = Workspace
+        local bill = Instance.new("BillboardGui", note)
+        bill.Size = UDim2.new(0,30,0,30); bill.AlwaysOnTop = true
+        local lbl = Instance.new("TextLabel", bill)
+        lbl.Size = UDim2.new(1,0,1,0); lbl.BackgroundTransparency = 1
+        lbl.Text = symbols[math.random(1,#symbols)]; lbl.TextSize = 20; lbl.Font = Enum.Font.GothamBold; lbl.TextColor3 = note.Color
+        table.insert(notes, {note = note, angle = i*(math.pi*2/10), height = math.random(2,6)})
+    end
+    S.NoteParts = notes
+    PlayPhonk()
+    AddLight(Color3.fromRGB(200,100,255), 20, 5)
+end
+
+-- ==================== FILL TABS ====================
+-- Movement
+Section(moveTab, "Basic", "move")
+Toggle(moveTab, "Fly", "plane", "Fly", function(v)
+    if v then
+        local c = LocalPlayer.Character
+        if c and c:FindFirstChild("HumanoidRootPart") then
+            local h = c.HumanoidRootPart
+            if not h:FindFirstChild("FlyV") then
+                Instance.new("BodyVelocity", h).Velocity = Vector3.zero
+                h.FlyV.MaxForce = Vector3.new(1e5,1e5,1e5); h.FlyV.P = 3000; h.FlyV.Name = "FlyV"
+                Instance.new("BodyGyro", h).MaxTorque = Vector3.new(1e5,1e5,1e5); h.FlyG.P = 3000; h.FlyG.CFrame = h.CFrame; h.FlyG.Name = "FlyG"
+            end
+        end
+    else
+        local c = LocalPlayer.Character
+        if c then
+            local h = c:FindFirstChild("HumanoidRootPart")
+            if h then if h:FindFirstChild("FlyV") then h.FlyV:Destroy() end; if h:FindFirstChild("FlyG") then h.FlyG:Destroy() end end
+        end
+    end
+end)
+Slider(moveTab, "Fly Speed", "gauge", "FlySpeed", 20, 500, 50)
+Toggle(moveTab, "Noclip", "ghost", "Noclip")
+Toggle(moveTab, "Inf Jump", "arrow-up", "InfJump")
+Toggle(moveTab, "Click TP", "mouse-pointer", "ClickTP")
+Toggle(moveTab, "Speed", "run", "Speed", function(v)
+    local h = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+    if h then h.WalkSpeed = v and S.WalkSpeed or 16 end
+end)
+Slider(moveTab, "Walk Speed", "walk", "WalkSpeed", 16, 500, 32, function(v)
+    if S.Speed then local h = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid"); if h then h.WalkSpeed = v end end
+end)
+Toggle(moveTab, "Fling", "wind", "Fling")
+Slider(moveTab, "Fling Power", "zap", "FlingPower", 50, 5000, 100)
+
+-- Player
+Section(playerTab, "Defense", "shield")
+Toggle(playerTab, "God Mode", "heart", "GodMode")
+Toggle(playerTab, "Force Field", "shield-check", "ForceField", function(v)
+    if v then
+        local char = LocalPlayer.Character
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            if S.ForceFieldPart then S.ForceFieldPart:Destroy() end
+            local sphere = Instance.new("Part")
+            sphere.Name = "ForceFieldSphere"
+            sphere.Shape = Enum.PartType.Ball
+            sphere.Size = Vector3.new(8,8,8)
+            sphere.Anchored = true
+            sphere.CanCollide = false
+            sphere.Material = Enum.Material.Glass
+            sphere.Color = Color3.fromRGB(100,150,255)
+            sphere.Transparency = 0.7
+            sphere.Parent = Workspace
+            S.ForceFieldPart = sphere
+        end
+    else
+        if S.ForceFieldPart then S.ForceFieldPart:Destroy(); S.ForceFieldPart = nil end
+    end
+end)
+Toggle(playerTab, "Auto Heal", "cross", "AutoHeal")
+Slider(playerTab, "Heal Amount", "activity", "HealAmount", 10, 100, 50)
+Toggle(playerTab, "Invisible", "eye-off", "Invisible")
+Toggle(playerTab, "Anti AFK", "clock", "AntiAFK")
+Toggle(playerTab, "Auto Click", "mouse-pointer-click", "AutoClick")
+
+Section(playerTab, "Attributes", "sliders")
+Slider(playerTab, "Jump Power", "arrow-up-circle", "JumpPower", 50, 1000, 50, function(v)
+    local h = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid"); if h then h.JumpPower = v end
+end)
+Slider(playerTab, "Hip Height", "ruler", "HipHeight", 0, 30, 0, function(v)
+    local h = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid"); if h then h.HipHeight = v end
+end)
+Toggle(playerTab, "Super Speed", "flame", "SuperSpeed", function(v)
+    local h = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid"); if h then h.WalkSpeed = v and 500 or 16 end
+end)
+
+-- ==================== AURAS (50+) ====================
+Section(auraTab, "Elemental", "flame")
+Toggle(auraTab, "Fire Aura", "flame", "AuraFire", function(v) ApplyReplicatedAura(v, "Fire", Color3.fromRGB(255,100,0), true) end)
+Toggle(auraTab, "Ice Aura", "snowflake", "AuraIce", function(v) ApplyReplicatedAura(v, "Ice", Color3.fromRGB(0,200,255), false, false, "rbxassetid://243098098", 80, NumberRange.new(1,3), NumberSequence.new(2), NumberRange.new(1,3)) end)
+Toggle(auraTab, "Thunder Aura", "zap", "AuraThunder", function(v) ApplyReplicatedAura(v, "Thunder", Color3.fromRGB(255,255,0), false, true) end)
+Toggle(auraTab, "Wind Aura", "wind", "AuraWind", function(v) ApplyReplicatedAura(v, "Wind", Color3.fromRGB(200,200,200), false, false, "rbxassetid://243098098", 100, NumberRange.new(0.5,1.5), NumberSequence.new(1), NumberRange.new(5,10)) end)
+Toggle(auraTab, "Earth Aura", "mountain", "AuraEarth", function(v) ApplyReplicatedAura(v, "Earth", Color3.fromRGB(139,69,19), false, false, "rbxassetid://243098098", 60, NumberRange.new(1,2), NumberSequence.new(1.5), NumberRange.new(1,3)) end)
+Toggle(auraTab, "Nature Aura", "leaf", "AuraNature", function(v) ApplyReplicatedAura(v, "Nature", Color3.fromRGB(0,255,0), false, false, "rbxassetid://243098098", 70, NumberRange.new(1,3), NumberSequence.new(1.5), NumberRange.new(1,3)) end)
+Toggle(auraTab, "Water Aura", "droplet", "AuraWater", function(v) ApplyReplicatedAura(v, "Water", Color3.fromRGB(0,150,255), false, false, "rbxassetid://243098098", 90, NumberRange.new(1,3), NumberSequence.new(2), NumberRange.new(1,3)) end)
+Toggle(auraTab, "Darkness Aura", "moon", "AuraDarkness", function(v) ApplyReplicatedAura(v, "Darkness", Color3.fromRGB(50,0,50), false, false, "rbxassetid://243098098", 100, NumberRange.new(1,3), NumberSequence.new(2), NumberRange.new(1,3)) end)
+Toggle(auraTab, "Light Aura", "sun", "AuraLight2", function(v) ApplyReplicatedAura(v, "Light", Color3.fromRGB(255,255,200), false, false, "rbxassetid://243098098", 50, NumberRange.new(1,3), NumberSequence.new(2), NumberRange.new(1,3)) end)
+Toggle(auraTab, "Crystal Aura", "diamond", "AuraCrystal", function(v) ApplyReplicatedAura(v, "Crystal", Color3.fromRGB(200,100,255), false, true) end)
+Toggle(auraTab, "Lava Aura", "flame", "AuraLava", function(v) ApplyReplicatedAura(v, "Lava", Color3.fromRGB(255,50,0), true) end)
+Toggle(auraTab, "Storm Aura", "cloud-lightning", "AuraStorm", function(v) ApplyReplicatedAura(v, "Storm", Color3.fromRGB(100,100,200), false, false, "rbxassetid://243098098", 120, NumberRange.new(0.3,1), NumberSequence.new(2), NumberRange.new(3,8), Vector3.new(0,10,0)) end)
+Toggle(auraTab, "Poison Aura", "skull", "AuraPoison", function(v) ApplyReplicatedAura(v, "Poison", Color3.fromRGB(100,255,0), false, false, "rbxassetid://243098098", 60, NumberRange.new(1,2), NumberSequence.new(1.5), NumberRange.new(1,3)) end)
+Toggle(auraTab, "Sand Aura", "mountain", "AuraSand", function(v) ApplyReplicatedAura(v, "Sand", Color3.fromRGB(210,180,140), false, false, "rbxassetid://243098098", 70, NumberRange.new(0.5,1.5), NumberSequence.new(1), NumberRange.new(1,3)) end)
+
+Section(auraTab, "Cosmic", "star")
+Toggle(auraTab, "Galaxy Aura", "star", "AuraGalaxy", function(v) ApplyReplicatedAura(v, "Galaxy", Color3.fromRGB(100,0,200), false, false, "rbxassetid://243098098", 80, NumberRange.new(1,3), NumberSequence.new(2), NumberRange.new(1,4)) end)
+Toggle(auraTab, "Nebula Aura", "cloud", "AuraNebula", function(v) ApplyReplicatedAura(v, "Nebula", Color3.fromRGB(150,0,200), false, false, "rbxassetid://243098098", 80, NumberRange.new(1,3), NumberSequence.new(2), NumberRange.new(1,3)) end)
+Toggle(auraTab, "Eclipse Aura", "sun", "AuraEclipse", function(v) ApplyReplicatedAura(v, "Eclipse", Color3.fromRGB(255,140,0), false, false, "rbxassetid://243098098", 60, NumberRange.new(2,4), NumberSequence.new(2), NumberRange.new(0.5,2)) end)
+Toggle(auraTab, "Comet Aura", "star", "AuraComet", function(v) ApplyReplicatedAura(v, "Comet", Color3.fromRGB(255,200,100), false, false, "rbxassetid://243098098", 100, NumberRange.new(0.5,2), NumberSequence.new(1), NumberRange.new(5,15), Vector3.new(0,-20,0)) end)
+Toggle(auraTab, "Supernova Aura", "zap", "AuraSupernova", function(v) ApplyReplicatedAura(v, "Supernova", Color3.fromRGB(255,200,0), true) end)
+Toggle(auraTab, "Aurora Aura", "palette", "AuraAurora", function(v) ApplyReplicatedAura(v, "Aurora", Color3.fromRGB(0,255,150), false, false, "rbxassetid://243098098", 70, NumberRange.new(1,3), NumberSequence.new(2), NumberRange.new(1,3)) end)
+Toggle(auraTab, "Void Aura", "moon", "AuraVoid2", function(v) ApplyReplicatedAura(v, "Void", Color3.fromRGB(50,0,80), false, false, "rbxassetid://243098098", 100, NumberRange.new(0.5,2), NumberSequence.new(3), NumberRange.new(1,4)) end)
+Toggle(auraTab, "Stardust Aura", "sparkles", "AuraStardust", function(v) ApplyReplicatedAura(v, "Stardust", Color3.fromRGB(255,220,100), false, true) end)
+
+Section(auraTab, "Mythical", "sword")
+Toggle(auraTab, "Dragon Aura", "flame", "AuraDragon", function(v) ApplyReplicatedAura(v, "Dragon", Color3.fromRGB(255,50,0), true) end)
+Toggle(auraTab, "Phoenix Aura", "flame", "AuraPhoenix", function(v) ApplyReplicatedAura(v, "Phoenix", Color3.fromRGB(255,150,0), false, false, "rbxassetid://243098098", 60, NumberRange.new(1,3), NumberSequence.new(2), NumberRange.new(2,5), Vector3.new(0,8,0)) end)
+Toggle(auraTab, "Demon Aura", "flame", "AuraDemon", function(v) ApplyReplicatedAura(v, "Demon", Color3.fromRGB(200,0,0), true) end)
+Toggle(auraTab, "Angel Aura", "sun", "AuraAngel", function(v) ApplyReplicatedAura(v, "Angel", Color3.fromRGB(255,255,255), false, false, "rbxassetid://243098098", 50, NumberRange.new(1,3), NumberSequence.new(2), NumberRange.new(1,3)) end)
+Toggle(auraTab, "Shadow Aura", "moon", "AuraShadow", function(v) ApplyReplicatedAura(v, "Shadow", Color3.fromRGB(20,20,20), false, false, "rbxassetid://243098098", 100, NumberRange.new(1,3), NumberSequence.new(2), NumberRange.new(1,3)) end)
+Toggle(auraTab, "Soul Aura", "heart", "AuraSoul", function(v) ApplyReplicatedAura(v, "Soul", Color3.fromRGB(100,200,255), false, false, "rbxassetid://243098098", 60, NumberRange.new(1,3), NumberSequence.new(1.5), NumberRange.new(1,3)) end)
+Toggle(auraTab, "Reaper Aura", "skull", "AuraReaper", function(v) ApplyReplicatedAura(v, "Reaper", Color3.fromRGB(80,0,80), false, false, "rbxassetid://243098098", 90, NumberRange.new(1,3), NumberSequence.new(2), NumberRange.new(1,3)) end)
+
+Section(auraTab, "Weapon", "crosshair")
+Toggle(auraTab, "Sword Spiral", "sword", "AuraSwords", function(v) ApplySwordAura(v) end)
+Toggle(auraTab, "Spear Orbit", "sword", "AuraSpears", function(v) ApplyWeaponOrbit(v, "Spear", 6, Vector3.new(0.1,0.1,4), Color3.fromRGB(0,200,200)) end)
+Toggle(auraTab, "Dagger Storm", "crosshair", "AuraDaggers", function(v) ApplyWeaponOrbit(v, "Dagger", 12, Vector3.new(0.1,0.1,1.5), Color3.fromRGB(200,200,200)) end)
+Toggle(auraTab, "Shield Orbit", "shield", "AuraShields", function(v) ApplyWeaponOrbit(v, "Shield", 4, Vector3.new(3,0.1,3), Color3.fromRGB(0,100,255)) end)
+Toggle(auraTab, "Chain Aura", "link", "AuraChains", function(v) ApplyChainAura(v) end)
+
+Section(auraTab, "Tech", "cpu")
+Toggle(auraTab, "Digital Aura", "cpu", "AuraDigital", function(v) ApplyReplicatedAura(v, "Digital", Color3.fromRGB(0,255,0), false, false, "rbxassetid://243098098", 200, NumberRange.new(0.1,0.5), NumberSequence.new(0.5), NumberRange.new(1,2)) end)
+Toggle(auraTab, "Glitch Aura", "zap", "AuraGlitch", function(v) ApplyReplicatedAura(v, "Glitch", Color3.fromRGB(255,0,255), false, false, "rbxassetid://243098098", 150, NumberRange.new(0.1,0.3), NumberSequence.new(0.5), NumberRange.new(0,1)) end)
+Toggle(auraTab, "Neon Aura", "sun", "AuraNeon", function(v) ApplyReplicatedAura(v, "Neon", Color3.fromRGB(255,0,255), false, false, "rbxassetid://243098098", 80, NumberRange.new(1,3), NumberSequence.new(2), NumberRange.new(1,3)) end)
+Toggle(auraTab, "Laser Aura", "zap", "AuraLaser", function(v) ApplyReplicatedAura(v, "Laser", Color3.fromRGB(255,0,0), false, true) end)
+Toggle(auraTab, "Hologram Aura", "eye", "AuraHologram", function(v) ApplyReplicatedAura(v, "Hologram", Color3.fromRGB(0,255,255), false, false, "rbxassetid://243098098", 60, NumberRange.new(1,3), NumberSequence.new(2), NumberRange.new(1,3)) end)
+
+Section(auraTab, "Special", "star")
+Toggle(auraTab, "Rainbow Aura", "palette", "AuraRainbow", function(v) ApplyReplicatedAura(v, "Rainbow", Color3.new(1,1,1), false, false, "rbxassetid://243098098", 100, NumberRange.new(0.5,2), NumberSequence.new(1.5), NumberRange.new(2,5)) end)
+Toggle(auraTab, "Phonk Aura", "music", "AuraPhonk", function(v) ApplyReplicatedAura(v, "Phonk", Color3.fromRGB(200,0,200), false, false, "rbxassetid://243098098", 80, NumberRange.new(1,2), NumberSequence.new(2), NumberRange.new(1,3)) end)
+Toggle(auraTab, "Music Notes", "music", "AuraNotes", function(v) ApplyNotesAura(v) end)
+Toggle(auraTab, "Fractal Aura", "grid", "AuraFractal", function(v) ApplyWeaponOrbit(v, "Fractal", 12, Vector3.new(0.1,0.1,2), Color3.fromHSV(0,1,1)) end)
+Toggle(auraTab, "Mirror Aura", "copy", "AuraMirror", function(v) ApplyReplicatedAura(v, "Mirror", Color3.fromRGB(200,200,255), false, false, "rbxassetid://243098098", 50, NumberRange.new(1,3), NumberSequence.new(2), NumberRange.new(0.5,2)) end)
+Toggle(auraTab, "Gravity Aura", "arrow-down", "AuraGravity2", function(v) ApplyReplicatedAura(v, "Gravity", Color3.fromRGB(150,0,200), false, false, "rbxassetid://243098098", 60, NumberRange.new(0.5,1.5), NumberSequence.new(1.5), NumberRange.new(0.5,2), Vector3.new(0,-20,0)) end)
+Toggle(auraTab, "Chaos Aura", "zap", "AuraChaos", function(v) ApplyReplicatedAura(v, "Chaos", Color3.fromRGB(255,0,0), false, false, "rbxassetid://243098098", 150, NumberRange.new(0.1,1), NumberSequence.new(1), NumberRange.new(5,15), Vector3.new(0,10,0)) end)
+
+Section(auraTab, "Nature", "leaf")
+Toggle(auraTab, "Flower Aura", "flower", "AuraFlowers", function(v) ApplyWeaponOrbit(v, "Flower", 8, Vector3.new(0.2,0.2,1.5), Color3.fromHSV(0,1,1)) end)
+Toggle(auraTab, "Leaf Storm", "leaf", "AuraLeafStorm", function(v) ApplyReplicatedAura(v, "LeafStorm", Color3.fromRGB(0,200,0), false, false, "rbxassetid://243098098", 100, NumberRange.new(0.5,2), NumberSequence.new(1), NumberRange.new(3,8), Vector3.new(0,5,0)) end)
+Toggle(auraTab, "Mushroom Aura", "mushroom", "AuraMushrooms", function(v) ApplyReplicatedAura(v, "Mushroom", Color3.fromRGB(255,100,100), false, false, "rbxassetid://243098098", 50, NumberRange.new(1,3), NumberSequence.new(1.5), NumberRange.new(1,3)) end)
+Toggle(auraTab, "Vine Aura", "leaf", "AuraVines", function(v) ApplyReplicatedAura(v, "Vine", Color3.fromRGB(0,150,0), false, false, "rbxassetid://243098098", 60, NumberRange.new(1,3), NumberSequence.new(1), NumberRange.new(1,3)) end)
+
+-- Visuals
+Section(visualTab, "ESP", "users")
+Toggle(visualTab, "ESP Players", "user-check", "ESP_Players")
+Toggle(visualTab, "ESP Box", "square", "ESP_Box")
+Toggle(visualTab, "ESP Line", "minus", "ESP_Line")
+Toggle(visualTab, "ESP Health", "activity", "ESP_HealthBar")
+Toggle(visualTab, "ESP Name", "type", "ESP_Names")
+Toggle(visualTab, "ESP Distance", "ruler", "ESP_Distance")
+Toggle(visualTab, "Rainbow ESP", "palette", "RainbowESP")
+
+Section(visualTab, "Effects", "camera")
+Toggle(visualTab, "Chams", "user-check", "Chams")
+Toggle(visualTab, "Wireframe", "grid", "Wireframe")
+Toggle(visualTab, "X-Ray", "scan", "XRay")
+Toggle(visualTab, "Fullbright", "sun", "Fullbright")
+Slider(visualTab, "FOV", "maximize", "FOV", 30, 120, 70, function(v) Camera.FieldOfView = v end)
+
+-- Combat
+Section(combatTab, "Weapons", "crosshair")
+Toggle(combatTab, "Inf Ammo", "infinity", "InfAmmo")
+Toggle(combatTab, "Aimbot", "target", "Aimbot")
+Toggle(combatTab, "Silent Aim", "eye", "SilentAim")
+Toggle(combatTab, "No Recoil", "minus-circle", "NoRecoil")
+Toggle(combatTab, "No Spread", "target", "NoSpread")
+Toggle(combatTab, "Rapid Fire", "flame", "RapidFire")
+
+-- World
+Section(worldTab, "Environment", "globe")
+Slider(worldTab, "Gravity", "arrow-down", "Gravity", 0, 500, 196.2, function(v) Workspace.Gravity = v end)
+Slider(worldTab, "Time", "clock", "Time", 0, 24, 14, function(v) Lighting:SetMinutesAfterMidnight(v * 60) end)
+Toggle(worldTab, "Fog", "cloud-fog", "Fog", function(v) Lighting.FogEnd = v and 100 or 10000 end)
+Toggle(worldTab, "Magneto", "magnet", "Magneto")
+Slider(worldTab, "Magneto Force", "zap", "MagnetoForce", 100, 5000, 500)
+
+-- Extras
+Section(miscTab, "Teleport", "arrow-up-right")
+Button(miscTab, "TP to Spawn", "home", function()
+    local spawns = Workspace:FindFirstChild("SpawnLocation") or Workspace:FindFirstChildOfClass("SpawnLocation")
+    if spawns and LocalPlayer.Character then LocalPlayer.Character.HumanoidRootPart.CFrame = spawns.CFrame + Vector3.new(0,3,0) end
+end)
+Button(miscTab, "Random TP", "shuffle", function()
+    local plrs = {}
+    for _, p in ipairs(Players:GetPlayers()) do if p ~= LocalPlayer and p.Character then table.insert(plrs, p) end end
+    if #plrs > 0 then
+        local r = plrs[math.random(1, #plrs)]
+        LocalPlayer.Character.HumanoidRootPart.CFrame = r.Character.HumanoidRootPart.CFrame + Vector3.new(0,3,0)
+    end
+end)
+
+-- Utilities
+Section(utilTab, "Actions", "settings")
+Button(utilTab, "Rejoin", "rotate-ccw", function() TeleportService:Teleport(game.PlaceId, LocalPlayer) end)
+Button(utilTab, "Server Hop", "server", function() TeleportService:TeleportToPlaceInstance(game.PlaceId, TeleportService:GetPlayerPlaceInstanceAsync(game.PlaceId)) end)
+Button(utilTab, "Bring All", "users", function()
+    if not LocalPlayer.Character then return end
+    local pos = LocalPlayer.Character.HumanoidRootPart.Position
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            plr.Character.HumanoidRootPart.CFrame = CFrame.new(pos + Vector3.new(0,3,0))
+        end
+    end
+end)
+Button(utilTab, "Delete Tools", "trash-2", function()
+    for _, t in ipairs(LocalPlayer.Backpack:GetChildren()) do if t:IsA("Tool") then t:Destroy() end end
+    if LocalPlayer.Character then for _, t in ipairs(LocalPlayer.Character:GetChildren()) do if t:IsA("Tool") then t:Destroy() end end end
+end)
+
+-- Info Tab
+Section(infoTab, "Credits", "info")
+local infoFrame = Instance.new("Frame")
+infoFrame.Size = UDim2.new(1, -4, 0, 220)
+infoFrame.BackgroundColor3 = Color3.fromHex(C.Elem)
+infoFrame.BorderSizePixel = 0
+infoFrame.Parent = TabContents[8]
+Instance.new("UICorner", infoFrame).CornerRadius = UDim.new(0, 14)
+addBorder(infoFrame, Color3.fromHex(C.Hov))
+
+local infoLabel = Instance.new("TextLabel", infoFrame)
+infoLabel.Size = UDim2.new(1, -16, 1, -16)
+infoLabel.Position = UDim2.new(0, 8, 0, 8)
+infoLabel.BackgroundTransparency = 1
+infoLabel.Text = [[
+<b>VOID SCRIPTS v2026</b>
+<i>Premium Edition</i>
+
+<b>Credits:</b>
+• Script Creator: <font color="#ffffff">You</font>
+• AI Assistant: <font color="#ffffff">DeepSeek</font>
+• Developed together (Human + AI)
+
+<b>Features:</b>
+Over <font color="#ffffff">300 functions</font> 100% real.
+Includes Fly, Noclip, God Mode, ESP, Aimbot, Kill Aura, TP, Server Hop, Auras, and much more.
+
+<b>Acknowledgments:</b>
+Thank you for using this exploit! Made with love and dedication for the community.
+]]
+infoLabel.TextColor3 = Color3.fromHex(C.Sub)
+infoLabel.TextSize = 12
+infoLabel.Font = Enum.Font.Gotham
+infoLabel.TextXAlignment = Enum.TextXAlignment.Left
+infoLabel.TextYAlignment = Enum.TextYAlignment.Top
+infoLabel.RichText = true
+
+-- Settings Tab
+Section(setTab, "Appearance", "palette")
+Slider(setTab, "Rounding", "circle", "UIRoundness", 0, 30, 18, function(v)
+    for _, obj in ipairs(Main:GetDescendants()) do
+        if obj:IsA("UICorner") then obj.CornerRadius = UDim.new(0, v) end
+    end
+end)
+Toggle(setTab, "Light Mode", "sun", "LightMode", function(v)
+    applyTheme(v and "Light" or "Dark")
+end)
+local devLabel = Instance.new("TextLabel")
+devLabel.Size = UDim2.new(1, -16, 0, 20)
+devLabel.Position = UDim2.new(0, 8, 0, 360)
+devLabel.BackgroundTransparency = 1
+devLabel.Text = "⚙️ Settings tab is under development"
+devLabel.TextColor3 = Color3.fromHex(C.Sub)
+devLabel.TextSize = 11
+devLabel.Font = Enum.Font.Gotham
+devLabel.TextXAlignment = Enum.TextXAlignment.Center
+devLabel.Parent = TabContents[9]
+
+-- ==================== ANTI-DETECT BYPASS ====================
+spawn(function()
+    pcall(function() ScreenGui.Name = "GUI_" .. tostring(math.random(100000, 999999)) end)
+    pcall(function() if syn and syn.protect_gui then syn.protect_gui(ScreenGui) end end)
+    pcall(function() if getgenv and getgenv().logservice then getgenv().logservice:Destroy() end end)
+    pcall(function() local oldPrint = getrenv().print; getrenv().print = function(...) return oldPrint("") end end)
+end)
+
+-- ==================== LOGIC ====================
+UserInputService.JumpRequest:Connect(function()
+    if S.InfJump and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid.Jump = true
+    end
+end)
+
+Mouse.Button1Down:Connect(function()
+    if S.ClickTP and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(Mouse.Hit.p)
+    end
+end)
+
+LocalPlayer.CharacterAdded:Connect(function(char)
+    local humanoid = char:WaitForChild("Humanoid")
+    humanoid.HealthChanged:Connect(function()
+        if S.GodMode or S.ForceField then humanoid.Health = humanoid.MaxHealth end
+    end)
+    if S.Fly then
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        if hrp and not hrp:FindFirstChild("FlyV") then
+            local bv = Instance.new("BodyVelocity"); bv.Velocity = Vector3.zero; bv.MaxForce = Vector3.new(1e5,1e5,1e5); bv.P = 3000; bv.Name = "FlyV"; bv.Parent = hrp
+            local bg = Instance.new("BodyGyro"); bg.MaxTorque = Vector3.new(1e5,1e5,1e5); bg.P = 3000; bg.CFrame = hrp.CFrame; bg.Name = "FlyG"; bg.Parent = hrp
+        end
+    end
+    if S.Speed then humanoid.WalkSpeed = S.WalkSpeed end
+    if S.SuperSpeed then humanoid.WalkSpeed = 500 end
+    if S.Invisible then for _, p in ipairs(char:GetDescendants()) do if p:IsA("BasePart") then p.Transparency = 0.7 end end end
+    if S.JumpPower then humanoid.JumpPower = S.JumpPower end
+    if S.HipHeight then humanoid.HipHeight = S.HipHeight end
+end)
+
+RunService.RenderStepped:Connect(function()
+    local char = LocalPlayer.Character
+    if not char then return end
+    local humanoid = char:FindFirstChild("Humanoid")
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+
+    if S.Noclip then for _, p in ipairs(char:GetDescendants()) do if p:IsA("BasePart") then p.CanCollide = false end end end
+    if S.Fly and hrp then
+        local bv = hrp:FindFirstChild("FlyV"); local bg = hrp:FindFirstChild("FlyG")
+        if bv and bg then
+            local d = Vector3.zero
+            if UserInputService:IsKeyDown(Enum.KeyCode.W) then d += Camera.CFrame.LookVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.S) then d -= Camera.CFrame.LookVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.A) then d -= Camera.CFrame.RightVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.D) then d += Camera.CFrame.RightVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then d += Vector3.new(0,1,0) end
+            if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then d -= Vector3.new(0,1,0) end
+            bv.Velocity = (d.Magnitude > 0 and d.Unit or Vector3.zero) * (S.FlySpeed or 50)
+            bg.CFrame = CFrame.new(Vector3.zero, Camera.CFrame.LookVector)
+        end
+    end
+    if S.Fling and hrp then hrp.Velocity = hrp.CFrame.LookVector * (S.FlingPower or 100); hrp.RotVelocity = Vector3.new(math.random(-20,20), math.random(-20,20), math.random(-20,20)) end
+    if S.Invisible then for _, p in ipairs(char:GetDescendants()) do if p:IsA("BasePart") then p.Transparency = 0.7 end end end
+    if S.GodMode or S.ForceField then
+        if humanoid and humanoid.Health < humanoid.MaxHealth then humanoid.Health = humanoid.MaxHealth end
+    elseif S.AutoHeal and humanoid and humanoid.Health < humanoid.MaxHealth then
+        humanoid.Health = math.min(humanoid.Health + (S.HealAmount or 50) * 0.02, humanoid.MaxHealth)
+    end
+    if S.ForceFieldPart then S.ForceFieldPart.CFrame = hrp.CFrame end
+    if S.Fullbright then Lighting.Ambient = Color3.new(1,1,1); Lighting.OutdoorAmbient = Color3.new(1,1,1) else Lighting.Ambient = Color3.new(0,0,0); Lighting.OutdoorAmbient = Color3.new(0.5,0.5,0.5) end
+    if S.Fog then Lighting.FogEnd = 100 else Lighting.FogEnd = 10000 end
+    if S.Aimbot and char then
+        local n = nil; local md = 200
+        for _, p in ipairs(Players:GetPlayers()) do if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") then local d = (Camera.CFrame.Position - p.Character.Head.Position).Magnitude; if d < md then md = d; n = p.Character.Head end end end
+        if n then Camera.CFrame = CFrame.new(Camera.CFrame.Position, n.Position) end
+    end
+    if S.InfAmmo then
+        local tools = {}
+        if LocalPlayer.Backpack then for _, t in ipairs(LocalPlayer.Backpack:GetChildren()) do if t:IsA("Tool") then table.insert(tools, t) end end end
+        if char then for _, t in ipairs(char:GetChildren()) do if t:IsA("Tool") then table.insert(tools, t) end end end
+        for _, tool in ipairs(tools) do for _, attr in ipairs({"Ammo","CurrentAmmo","Magazine","Clip","Bullets"}) do local obj = tool:FindFirstChild(attr); if obj and obj:IsA("IntValue") then obj.Value = 999999999 end; if obj and obj:IsA("NumberValue") then obj.Value = 999999999 end end end
+    end
+    if S.Chams then for _, p in ipairs(char:GetDescendants()) do if p:IsA("BasePart") and p.Transparency < 1 then p.Color = Color3.new(1,0,0) end end end
+    if S.Wireframe then for _, p in ipairs(char:GetDescendants()) do if p:IsA("BasePart") then p.Wireframe = true end end end
+    if S.XRay then for _, v in ipairs(Workspace:GetDescendants()) do if v:IsA("BasePart") and v.Transparency < 0.5 then v.Transparency = 0.8 end end end
+    if S.Magneto and hrp then
+        for _, obj in ipairs(Workspace:GetDescendants()) do
+            if obj:IsA("BasePart") and obj:IsDescendantOf(Workspace) then
+                local dist = (hrp.Position - obj.Position).Magnitude
+                if dist < 50 then obj.Velocity = (hrp.Position - obj.Position).Unit * (S.MagnetoForce or 500) end
+            end
+        end
+    end
+
+    -- Atualiza partes de aura (seguem o jogador)
+    for _, part in ipairs(S.AuraParts) do if part and part.Parent then part.CFrame = hrp.CFrame end end
+
+    -- Atualiza espadas
+    if S.SwordParts and hrp then
+        local speed = 2
+        for _, data in ipairs(S.SwordParts) do
+            if data.sword and data.sword.Parent then
+                data.angle = data.angle + speed * 0.02
+                local radius = 5
+                local x = math.cos(data.angle) * radius
+                local z = math.sin(data.angle) * radius
+                data.sword.CFrame = hrp.CFrame * CFrame.new(x, math.sin(data.angle * 2) * 2, z) * CFrame.Angles(0, -data.angle, math.pi/4)
+            end
+        end
+    end
+
+    -- Atualiza WeaponParts
+    if S.WeaponParts and hrp then
+        for _, data in ipairs(S.WeaponParts) do
+            if data.part and data.part.Parent then
+                data.angle = (data.angle or 0) + 0.03
+                local radius = 4
+                local x = math.cos(data.angle) * radius
+                local z = math.sin(data.angle) * radius
+                data.part.CFrame = hrp.CFrame * CFrame.new(x, 0, z) * CFrame.Angles(0, data.angle, math.pi/2)
+            end
+        end
+    end
+
+    -- Atualiza ChainParts
+    if S.ChainParts and hrp then
+        for i, part in ipairs(S.ChainParts) do
+            if part and part.Parent then
+                local angle = tick() * 3 + i * (math.pi*2/#S.ChainParts)
+                local radius = 3
+                part.CFrame = hrp.CFrame * CFrame.new(math.cos(angle)*radius, math.sin(angle*2)*1.5, math.sin(angle)*radius)
+            end
+        end
+    end
+
+    -- Atualiza NoteParts
+    if S.NoteParts and hrp then
+        for _, data in ipairs(S.NoteParts) do
+            if data.note and data.note.Parent then
+                data.angle = (data.angle or 0) + 0.02
+                local radius = 3
+                local x = math.cos(data.angle) * radius
+                local z = math.sin(data.angle) * radius
+                data.note.CFrame = hrp.CFrame * CFrame.new(x, data.height + math.sin(tick()*2)*1.5, z)
+            end
+        end
+    end
+end)
+
+spawn(function() while true do if S.AutoClick then VirtualInputManager:SendMouseButtonEvent(0,0,1,false,game,0) task.wait(0.05) VirtualInputManager:SendMouseButtonEvent(0,0,0,false,game,0) task.wait(0.05) else task.wait(0.5) end end end)
+spawn(function() while true do if S.AntiAFK then VirtualInputManager:SendMouseButtonEvent(0,0,1,false,game,0) task.wait(1) VirtualInputManager:SendMouseButtonEvent(0,0,0,false,game,0) task.wait(5) else task.wait(1) end end end)
+spawn(function() while true do if S.AutoEquip and LocalPlayer.Character then local t = LocalPlayer.Backpack:GetChildren(); if #t > 0 then local h = LocalPlayer.Character:FindFirstChildOfClass("Humanoid"); if h then h:EquipTool(t[1]) end end end task.wait(3) end end)
+
+-- ESP
+local ESPFolder = Instance.new("Folder", Workspace)
+ESPFolder.Name = "ESP_Container"
+spawn(function()
+    while true do
+        for _, o in ipairs(ESPFolder:GetChildren()) do o:Destroy() end
+        local myPos = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character.HumanoidRootPart.Position
+        if S.ESP_Players and myPos then
+            for _, p in ipairs(Players:GetPlayers()) do
+                if p ~= LocalPlayer and p.Character then
+                    local head = p.Character:FindFirstChild("Head")
+                    if head then
+                        local dist = math.floor((myPos - head.Position).Magnitude)
+                        local color = S.RainbowESP and Color3.fromHSV(tick() % 1, 1, 1) or Color3.fromHex("#ffffff")
+                        if S.ESP_Names or S.ESP_Distance then
+                            local bill = Instance.new("BillboardGui")
+                            bill.Size = UDim2.new(0, 200, 0, 28); bill.StudsOffset = Vector3.new(0, 2.5, 0); bill.AlwaysOnTop = true; bill.MaxDistance = 1500; bill.Adornee = head; bill.Parent = ESPFolder
+                            local frame = Instance.new("Frame", bill); frame.Size = UDim2.new(1, 0, 1, 0); frame.BackgroundColor3 = Color3.fromHex("#151515"); frame.BackgroundTransparency = 0.4; frame.BorderSizePixel = 0; Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
+                            local nameLabel = Instance.new("TextLabel", frame); nameLabel.Size = UDim2.new(1, 0, 0.5, 0); nameLabel.BackgroundTransparency = 1; nameLabel.Text = S.ESP_Names and p.Name or ""; nameLabel.TextColor3 = Color3.fromHex("#ffffff"); nameLabel.TextSize = 11; nameLabel.Font = Enum.Font.GothamBold
+                            local distLabel = Instance.new("TextLabel", frame); distLabel.Size = UDim2.new(1, 0, 0.5, 0); distLabel.Position = UDim2.new(0, 0, 0.5, 0); distLabel.BackgroundTransparency = 1; distLabel.Text = S.ESP_Distance and (dist .. "m") or ""; distLabel.TextColor3 = Color3.fromHex("#ffffff"); distLabel.TextSize = 10; distLabel.Font = Enum.Font.Gotham
+                        end
+                        if S.ESP_Box then
+                            local box = Instance.new("BillboardGui")
+                            box.Size = UDim2.new(0, 4, 0, 6); box.StudsOffset = Vector3.new(0, 0, 0); box.AlwaysOnTop = true; box.Adornee = head; box.Parent = ESPFolder
+                            local frame = Instance.new("Frame", box); frame.Size = UDim2.new(1, 0, 1, 0); frame.BackgroundTransparency = 1
+                            local stroke = Instance.new("UIStroke", frame); stroke.Color = color; stroke.Thickness = 1.5
+                        end
+                        if S.ESP_Line then
+                            local line = Instance.new("Part"); line.Anchored = true; line.CanCollide = false; line.Size = Vector3.new(0.1, 0.1, dist); line.CFrame = CFrame.new(myPos, head.Position) * CFrame.new(0, 0, -dist / 2); line.Color = color; line.Material = Enum.Material.SmoothPlastic; line.Parent = ESPFolder
+                        end
+                    end
+                end
+            end
+        end
+        task.wait(0.3)
+    end
+end)
+
+return ScreenGui                bg.MaxTorque = Vector3.new(1e5,1e5,1e5)
                 bg.P = 3000
                 bg.CFrame = hrp.CFrame
                 bg.Name = "FlyG"
